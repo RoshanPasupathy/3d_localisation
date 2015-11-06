@@ -42,7 +42,7 @@ cdef unsigned char[:,:,::1] tablegen(long hmin,long hmax,long smin, long smax, l
                         table_ptr[(256*256*x0) + (256*y0)+z0] = 1
     return table
 
-cdef unsigned char[:,:,::1] tablelut = tablegen(62,68,120,255,190,255)
+cdef unsigned char[:,:,::1] tablelut = tablegen(60,70,80,255,210,255)
 cdef unsigned char* tablelut_ptr = &tablelut[0,0,0]
 
 
