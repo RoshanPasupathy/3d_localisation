@@ -1,9 +1,8 @@
 import numpy as np
 import cv2
-from matplotlib import pyplot as plt
 import os
+from LUTptr import squarelut5
 import time
-from LUTptr2 import bgrhsv 
 
 os.system('v4l2-ctl -d 0 -c focus_auto=0')
 os.system('v4l2-ctl -d 0 -c focus_absolute=0')
@@ -19,26 +18,32 @@ cap.set(cv2.cv.CV_CAP_PROP_FPS, 30)
 b = cap.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT)
 c = cap.get(cv2.cv.CV_CAP_PROP_FRAME_WIDTH)
 print b,c
-l = 1 
+output = np.array([0,640,0,480])
+
+l = 1
 i = 1
-colorlow = np.array([60,225,15])
-colorhigh = np.array([63,255,50])
 start = time.time()
-while (True) & ( i < 2):
+while (True) & ( l < 100):
 	ret,frame = cap.read()
-	hsv2 = np.asarray(bgrhsv(frame,480,640))
-	binary4 = cv2.inRange(hsv2,colorlow,colorhigh)
-	cv2.imshow('bin',binary4)
-	l +=1
-#	if cv2.waitKey(1) & 0xFF == ord('c'):
-#		hsv2 = np.asarray(bgrhsv(frame,480,640))
-#		
-#		i += 1
-#		print stringval + ' taken'
+	frame1 = frame.copy()
+	output = squarelut5(output,480,640,3,frame)
+	if output[0] < output[1]:
+		cv2.rectangle(frame,(output[0],output[2]),(output[1],output[3]),(0,255,0),2)
+		print np.asarray(output)
+	else:
+		print "Ball Not detected"
+	l += 1
+	cv2.imshow('frame',frame)
+	if cv2.waitKey(1) & 0xFF == ord('c'):
+		stringval = 'img' + str(i) +'.bmp'
+		cv2.imwrite(stringval,frame)
+		i += 1
+		print stringval + ' taken'
 	if cv2.waitKey(1) & 0xFF == ord('q'):
 		break
 end = time.time()
-print 'time elapsed = %f s' %(end - start)
-print 'frame rate = %f' %(l/(end - start))
+print end - start
+print l/(end-start)
+
 cap.release()
 cv2.destroyAllWindows()

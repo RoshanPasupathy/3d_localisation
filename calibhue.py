@@ -3,7 +3,7 @@ import cv2
 from matplotlib import pyplot as plt
 import os
 import time
-from LUTptr import bgrhsvarray2 
+from LUTptr2 import bgrhsvarray2 
 
 os.system('v4l2-ctl -d 0 -c focus_auto=0')
 os.system('v4l2-ctl -d 0 -c focus_absolute=0')
