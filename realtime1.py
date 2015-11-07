@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 import os
-from LUTptr import squarelut5
+from LUTptr1 import squarelut5
 import time
 
 os.system('v4l2-ctl -d 0 -c focus_auto=0')
@@ -28,19 +28,19 @@ while (True) & ( l < 450):
 	#frame1 = frame.copy()
 	output = squarelut5(output,480,640,3,frame)
 	if output[0] < output[1]:
-		cv2.rectangle(frame,(output[0],output[2]),(output[1],output[3]),(255,0,0),2)
+		#cv2.rectangle(frame,(output[0],output[2]),(output[1],output[3]),(255,0,0),2)
 		print np.asarray(output)
 	else:
 		print "Ball Not detected"
 	l += 1
-	cv2.imshow('frame',frame)
+	#cv2.imshow('frame',frame)
 	#if cv2.waitKey(1) & 0xFF == ord('c'):
 	#	stringval = 'img' + str(i) +'.bmp'
 	#	cv2.imwrite(stringval,frame1)
 	#	i += 1
 	#	print stringval + ' taken'
-	if cv2.waitKey(1) & 0xFF == ord('q'):
-		break
+	#if cv2.waitKey(1) & 0xFF == ord('q'):
+	#	break
 end = time.time()
 print end - start
 print l/(end-start)
