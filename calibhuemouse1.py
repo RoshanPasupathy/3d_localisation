@@ -43,6 +43,8 @@ def onmouse(event,x,y,flags,params):
     """this function is called on mouse click. it plots colour,saturation and intensity for slected region of interest"""
     # Declare global objects
     global sceneImg,rectangle,rect,ix,iy,rect_over, hueaxis,saturationaxis,valueaxis,picturestaken,scene,calibwindowopen
+    #Copy img
+    sceneCopy = sceneImg.copy()
     # Draw Rectangle
     if event == cv2.EVENT_LBUTTONDOWN:
         rectangle = True
@@ -50,15 +52,16 @@ def onmouse(event,x,y,flags,params):
 
     elif event == cv2.EVENT_MOUSEMOVE:
         if rectangle == True:
-#            cv2.rectangle(sceneCopy,(ix,iy),(x,y),(0,255,0),1)
-            rect = (min(ix,x),min(iy,y),abs(ix-x),abs(iy-y))
+            cv2.rectangle(sceneCopy,(ix,iy),(x,y),(0,255,0),1)
+            #rect = (min(ix,x),min(iy,y),abs(ix-x),abs(iy-y))
+            cv2.imshow('mouse input', sceneCopy)
+            cv2.waitKey(1)
 
     elif event == cv2.EVENT_LBUTTONUP:
         rectangle = False
         rect_over = True
         
-	#Copy img
-        sceneCopy = sceneImg.copy()
+	
         #cv2.rectangle(sceneImg,(ix,iy),(x,y),(0,255,0),1)
         # Draw rectangle in copy
         cv2.rectangle(sceneCopy,(ix,iy),(x,y),(0,255,0),1)
