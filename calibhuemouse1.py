@@ -15,7 +15,7 @@ from LUTptr2 import bgrhsvarray2
 os.system('v4l2-ctl -d 0 -c focus_auto=0')
 os.system('v4l2-ctl -d 0 -c focus_absolute=0')
 os.system('v4l2-ctl -d 0 -c exposure_auto=1')
-os.system('v4l2-ctl -d 0 -c exposure_absolute=3')
+os.system('v4l2-ctl -d 0 -c exposure_absolute=10')
 os.system('v4l2-ctl -d 0 -c contrast=100')
 os.system('v4l2-ctl -d 0 -c brightness=100')
 os.system('v4l2-ctl -d 0 -c white_balance_temperature_auto=0')

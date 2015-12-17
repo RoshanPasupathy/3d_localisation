@@ -42,11 +42,12 @@ cdef unsigned char[:,:,::1] tablegen(long hmin,long hmax,long smin, long smax, l
                         table_ptr[(256*256*x0) + (256*y0)+z0] = 1
     return table
 
-cdef unsigned char[:,:,::1] tablelut = tablegen(87,90,50,255,190,255)
+#cdef unsigned char[:,:,::1] tablelut = tablegen(87,90,50,255,190,255)
+cdef unsigned char[:,:,::1] tablelut = tablegen(163,179,50,255,50,255)
 cdef unsigned char* tablelut_ptr = &tablelut[0,0,0]
-cdef long[::1] x_out = np.zeros((480*640), dtype = np.int32)
+#cdef long[::1] x_out = np.zeros((480*640), dtype = np.int32)
 #cdef long* x_outptr = &x_out[0]
-cdef long[::1] y_out = np.zeros((640), dtype = np.int32)
+#cdef long[::1] y_out = np.zeros((640), dtype = np.int32)
 #cdef long* y_outptr = &y_out[0]
 
 @cython.boundscheck(False)
@@ -58,14 +59,14 @@ def squarelut5(long[::1] input,long x, long y,unsigned char v,unsigned char[:,:,
         long xminscan = (inputptr[2]< inputptr[3])*((v+1)*inputptr[2] > (v*inputptr[3]))*((v + 1)*inputptr[2] - (v*inputptr[3]))
         long yminscan = (inputptr[0]< inputptr[1])*((v+1)*inputptr[0] > (v*inputptr[1]))*((v + 1)*inputptr[0] - (v*inputptr[1]))
         long xmaxscan = (inputptr[2]< inputptr[3])*((v+1)*inputptr[3] < x + (v*inputptr[2]))*(((v+1)*inputptr[3]) - (v*inputptr[2]) - x) + x
-        long ymaxscan = (inputptr[0]< inputptr[1])*((v+1)*inputptr[1] < x + (v*inputptr[0]))*(((v+1)*inputptr[1]) - (v*inputptr[0]) - y) + y
+        long ymaxscan = (inputptr[0]< inputptr[1])*((v+1)*inputptr[1] < y + (v*inputptr[0]))*(((v+1)*inputptr[1]) - (v*inputptr[0]) - y) + y
         long deltax = xmaxscan - xminscan
         long deltay = ymaxscan - yminscan
         unsigned char* img_ptr = &image[0,0,0]
         unsigned char inc
-        #long[::1] x_out = np.zeros((deltax*deltay), dtype = np.int32)
+        long[::1] x_out = np.zeros((deltax*deltay), dtype = np.int32)
         long* x_outptr = &x_out[0]
-        #long[::1] y_out = np.zeros((deltay), dtype = np.int32)
+        long[::1] y_out = np.zeros((deltay), dtype = np.int32)
         long* y_outptr = &y_out[0]
         long[::1] output = np.array([y,0,0,0], dtype = np.int32)
         long* outputptr = &output[0]
@@ -91,6 +92,53 @@ def squarelut5(long[::1] input,long x, long y,unsigned char v,unsigned char[:,:,
     outputptr[2] = x_outptr[1]
     outputptr[3] = x_outptr[i]
     return output
+
+@cython.boundscheck(False)
+@cython.cdivision(True)
+@cython.wraparound(False)
+def squarelut6(long[::1] input,long x, long y,unsigned char v,unsigned char[:,:,::1] image):
+    cdef:
+        long* inputptr = &input[0]
+        long xminscan = (inputptr[2]<= inputptr[3])*((v+1)*inputptr[2] > (v*inputptr[3]))*((v + 1)*inputptr[2] - (v*inputptr[3]))
+        long yminscan = (inputptr[0]<= inputptr[1])*((v+1)*inputptr[0] > (v*inputptr[1]))*((v + 1)*inputptr[0] - (v*inputptr[1]))
+        long xmaxscan = ((inputptr[2]<= inputptr[3])*((v+1)*(inputptr[3]+1) < x + (v*inputptr[2]))*(((v+1)*(inputptr[3]+1)) - (v*inputptr[2]) - x)) + x
+        long ymaxscan = ((inputptr[0]<= inputptr[1])*((v+1)*(inputptr[1]+1) < y + (v*inputptr[0]))*(((v+1)*(inputptr[1]+1)) - (v*inputptr[0]) - y)) + y
+        long deltax = xmaxscan - xminscan
+        long deltay = ymaxscan - yminscan
+        unsigned char* img_ptr = &image[0,0,0]
+        unsigned char inc
+        long[::1] x_out = np.zeros((deltax*deltay), dtype = np.int32)
+        long* x_outptr = &x_out[0]
+        long[::1] y_out = np.zeros((deltay), dtype = np.int32)
+        long* y_outptr = &y_out[0]
+        long[::1] output = np.array([y,0,0,0], dtype = np.int32)
+        long* outputptr = &output[0]
+        long x0,y0,i0
+        long i = 0
+        long pos[3]
+        long* posptr = &pos[0]
+    posptr[0] = (xminscan*y) +yminscan
+    y_outptr[1] = y
+    for x0 in range(deltax):
+        posptr[1] = posptr[0] + (x0 *y)
+        i0 = i
+        for y0 in range(deltay):
+            posptr[2] = 3 * (posptr[1] + y0)
+            inc = tablelut_ptr[256*256*img_ptr[posptr[2]] + 256*img_ptr[posptr[2] +1] + img_ptr[posptr[2] + 2]]
+            #inc = tablelut_ptr[256*256*img_ptr[3*((xminscan + x0)*y + y0 + yminscan)] + 256*img_ptr[3*((xminscan + x0)*y + y0 + yminscan) +1] + img_ptr[3*((xminscan + x0)*y + y0 + yminscan) + 2]]
+            i += inc
+            y_outptr[inc*(i - i0)] = y0 + yminscan
+            x_outptr[inc*i] = x0 + xminscan
+        #break out of loop if no pixel of ineterest detected in 3 lines
+        if x0 - x_outptr[i] > 2:
+            break
+        y_outptr[0] = 0
+        outputptr[0] += (y_outptr[1] - outputptr[0])*(outputptr[0] > y_outptr[1])
+        outputptr[1] += (y_outptr[i-i0] - outputptr[1])*(outputptr[1] < y_outptr[i - i0])
+    outputptr[2] = x_outptr[1]
+    outputptr[3] = x_outptr[i]
+    return output
+
 
 @cython.boundscheck(False)
 @cython.cdivision(True)
