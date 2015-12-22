@@ -7,7 +7,7 @@ import time
 os.system('v4l2-ctl -d 0 -c focus_auto=0')
 os.system('v4l2-ctl -d 0 -c focus_absolute=0')
 os.system('v4l2-ctl -d 0 -c exposure_auto=1')
-os.system('v4l2-ctl -d 0 -c exposure_absolute=10')
+os.system('v4l2-ctl -d 0 -c exposure_absolute=3')
 os.system('v4l2-ctl -d 0 -c contrast=100')
 os.system('v4l2-ctl -d 0 -c brightness=100')
 os.system('v4l2-ctl -d 0 -c white_balance_temperature_auto=0')
@@ -28,7 +28,7 @@ while (True) & ( l < 450):
 	#frame1 = frame.copy()
 	output = squarelut6(output,480,640,25,frame)
 	if output[0] <= output[1]:
-		cv2.rectangle(frame,(output[0],output[2]),(output[1],output[3]),(0,255,0),2)
+		cv2.rectangle(frame,(output[0],output[2]),(output[1],output[3]),(255,0,0),2)
 		print np.asarray(output)
 	else:
 		print "Ball Not detected"

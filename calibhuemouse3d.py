@@ -7,15 +7,17 @@ Created on Wed Dec 16 13:16:07 2015
 #import modules
 import numpy as np
 import cv2
-from matplotlib import pyplot as plt
 import os
-from LUTptr2 import bgrhsvarray2 
+from LUTptr2 import bgrhsvarray3
+from pylab import *
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib import pyplot as plt
 
 #set camera parameters
 os.system('v4l2-ctl -d 0 -c focus_auto=0')
 os.system('v4l2-ctl -d 0 -c focus_absolute=0')
 os.system('v4l2-ctl -d 0 -c exposure_auto=1')
-os.system('v4l2-ctl -d 0 -c exposure_absolute=3')
+os.system('v4l2-ctl -d 0 -c exposure_absolute=250')
 os.system('v4l2-ctl -d 0 -c contrast=100')
 os.system('v4l2-ctl -d 0 -c brightness=100')
 os.system('v4l2-ctl -d 0 -c white_balance_temperature_auto=0')
@@ -29,10 +31,7 @@ running = True # status of webcam loop. False = terminate
 scene = False #Is the selection window being displayed or video window
 
 #declare calibration parameters
-xaxis = np.arange(0,256,1)
-hueaxis = np.zeros(256)
-saturationaxis = np.zeros(256)
-valueaxis = np.zeros(256)
+colourfreq = np.zeros((256,256,256))
 
 #region of interest parameters and flags
 rect = (0,0,1,1) #coordinates of corners
@@ -42,7 +41,7 @@ rect_over = False
 def onmouse(event,x,y,flags,params):
     """this function is called on mouse click. it plots colour,saturation and intensity for slected region of interest"""
     # Declare global objects
-    global sceneImg,rectangle,rect,ix,iy,rect_over, hueaxis,saturationaxis,valueaxis,picturestaken,scene,calibwindowopen
+    global sceneImg,rectangle,rect,ix,iy,rect_over, colourfreq,picturestaken,scene,calibwindowopen
     #Copy img
     sceneCopy = sceneImg.copy()
     # Draw Rectangle
@@ -68,10 +67,8 @@ def onmouse(event,x,y,flags,params):
         
         
         rect = (min(ix,x),min(iy,y),abs(ix-x),abs(iy-y))       
-        filteraxis = np.asarray(bgrhsvarray2(sceneImg,rect[1],rect[1]+rect[3],rect[0],rect[0]+rect[2]))
-        hueaxis += filteraxis[0,:]
-        saturationaxis += filteraxis[1,:]
-        valueaxis += filteraxis[2,:]
+        filteraxis = np.asarray(bgrhsvarray3(sceneImg,rect[1],rect[1]+rect[3],rect[0],rect[0]+rect[2]))
+        colourfreq += filteraxis
         
         #display copy with rectangle for 1 second
         cv2.imshow('mouse input', sceneCopy)
@@ -116,23 +113,31 @@ while running:
     	calibwindowopen = True
     if not scene:
         cv2.imshow('video', frame)
-    if picturestaken == 6:
+    if picturestaken == 2:
     	running = False
     
-sortedh = np.sort(hueaxis)
-huevals = np.array(np.where(hueaxis >= sortedh[-3])).tolist() #list with double bracket
-print 'hue values of ball =  %s. Please refer to plot' %(', '.join(str(it) for it in huevals[0]))
-plt.figure(0)
-plt.plot(xaxis,hueaxis,'ro')
-plt.ylabel('Hue')
+fig = plt.figure(figsize = (8,6))
+ax = fig.add_subplot(111,projection = '3d')
+#sortedh = np.sort(hueaxis)
+#huevals = np.array(np.where(hueaxis >= sortedh[-3])).tolist() #list with double bracket
+#print 'hue values of ball =  %s. Please refer to plot' %(', '.join(str(it) for it in huevals[0]))
 
-plt.figure(1)
-plt.plot(xaxis,saturationaxis,'bo')
-plt.ylabel('Saturation')
+interestpos = np.nonzero(colourfreq)
+xs = interestpos[0]
+ys = interestpos[1]
+zs = interestpos[2]
+colval = colourfreq[np.nonzero(colourfreq)]
 
-plt.figure(2)
-plt.plot(xaxis,valueaxis,'go')
-plt.ylabel('Value')
+colors = cm.hsv(colval/max(colval))
+colmap = cm.ScalarMappable(cmap = cm.hsv)
+colmap.set_array(colval)
+
+yg = ax.scatter(xs,ys,zs, c=colors, marker='o')
+cb = fig.colorbar(colmap)
+
+ax.set_xlabel('Hue')
+ax.set_ylabel('Saturation')
+ax.set_zlabel('Value')
 
 cv2.destroyAllWindows()
 cap.release()

@@ -43,7 +43,8 @@ cdef unsigned char[:,:,::1] tablegen(long hmin,long hmax,long smin, long smax, l
     return table
 
 #cdef unsigned char[:,:,::1] tablelut = tablegen(87,90,50,255,190,255)
-cdef unsigned char[:,:,::1] tablelut = tablegen(163,179,50,255,50,255)
+#cdef unsigned char[:,:,::1] tablelut = tablegen(163,179,50,255,50,255)
+cdef unsigned char[:,:,::1] tablelut = tablegen(39,65,80,255,50,255)
 cdef unsigned char* tablelut_ptr = &tablelut[0,0,0]
 #cdef long[::1] x_out = np.zeros((480*640), dtype = np.int32)
 #cdef long* x_outptr = &x_out[0]
@@ -242,3 +243,39 @@ def bgrhsvarray2(unsigned char[:,:,::1] image,long xmin,long xmax,long ymin, lon
             yaxisptr[256 + saturation] += 1
             yaxisptr[256*2 + int(r)] += 1
     return yaxis
+
+@cython.boundscheck(False)
+@cython.cdivision(True)
+@cython.wraparound(False)
+def bgrhsvarray3(unsigned char[:,:,::1] image,long xmin,long xmax,long ymin, long ymax):
+    cdef:
+        unsigned char* img_ptr = &image[0,0,0]
+        unsigned long[:,:,::1] colourscat = np.zeros((256,256,256),dtype = np.uint32)
+        unsigned long* colptr = &colourscat[0,0,0]
+        long x0,y0
+        double b,g,r
+        long hue,saturation
+        double chroma
+        long deltax = xmax - xmin
+        long deltay = ymax - ymin
+    for x0 in range(deltax):
+        for y0 in range(deltay):
+            b = img_ptr[3*((xmin +x0)* 640 + y0 + ymin)]
+            g = img_ptr[3*((xmin +x0)* 640 + y0 + ymin) + 1]
+            r = img_ptr[3*((xmin +x0)* 640 + y0 + ymin) + 2]
+            K = 0
+            if g < b:
+                g,b = b,g
+                K = -6
+            if r < g:
+                r,g = g,r
+                K =  -K - 2
+            chroma = r - min(g,b)
+            if chroma != 0:
+                hue = int(30 * abs(K +((g-b)/(chroma))))
+            if r != 0:
+                saturation = int(255* chroma/(r * 1.0))
+            else:
+                saturation = 0
+            colptr[(256*256*hue) + (256*saturation)+int(r)] += 1
+    return colourscat
