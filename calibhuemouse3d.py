@@ -128,9 +128,9 @@ ys = interestpos[1]
 zs = interestpos[2]
 colval = colourfreq[np.nonzero(colourfreq)]
 
-colors = cm.hsv(colval/max(colval))
-colmap = cm.ScalarMappable(cmap = cm.hsv)
-colmap.set_array(colval)
+colors = cm.brg(colval/max(colval))
+colmap = cm.ScalarMappable(cmap = cm.brg)
+colmap.set_array(colval/max(colval))
 
 yg = ax.scatter(xs,ys,zs, c=colors, marker='o')
 cb = fig.colorbar(colmap)
