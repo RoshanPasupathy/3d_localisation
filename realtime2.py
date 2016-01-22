@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 import os
-from LUTptr2 import squarelut6
+from LUTptr3 import squarelut6
 import time
 
 os.system('v4l2-ctl -d 0 -c focus_auto=0')

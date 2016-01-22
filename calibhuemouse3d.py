@@ -6,6 +6,8 @@ Created on Wed Dec 16 13:16:07 2015
 """
 #import modules
 import numpy as np
+import matplotlib
+matplotlib.use('tkagg')
 import cv2
 import os
 from LUTptr2 import bgrhsvarray3
@@ -132,13 +134,13 @@ colors = cm.brg(colval/max(colval))
 colmap = cm.ScalarMappable(cmap = cm.brg)
 colmap.set_array(colval/max(colval))
 
-yg = ax.scatter(xs,ys,zs, c=colors, marker='o')
+yg = ax.scatter(xs,ys,zs, c=colors, marker='s')
 cb = fig.colorbar(colmap)
 
 ax.set_xlabel('Hue')
 ax.set_ylabel('Saturation')
 ax.set_zlabel('Value')
-
+#plt.ion()
 cv2.destroyAllWindows()
 cap.release()
 plt.show()
