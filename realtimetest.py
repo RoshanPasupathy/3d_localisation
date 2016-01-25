@@ -1,7 +1,8 @@
 import numpy as np
 import cv2
 import os
-from LUTptr3 import squarelut6
+from LUTptr4 import squarelut6
+from LUTptr4 import cleanupf
 import time
 
 os.system('v4l2-ctl -d 0 -c focus_auto=0')
@@ -26,14 +27,14 @@ start = time.clock()
 while (True) & ( l < 450):
 	ret,frame = cap.read()
 	#frame1 = frame.copy()
-	#output = squarelut6(output,480,640,10,frame)
+	output = squarelut6(output,480,640,10,frame)
 	if output[0] <= output[1]:
-		#cv2.rectangle(frame,(output[0],output[2]),(output[1],output[3]),(255,0,0),2)
+		cv2.rectangle(frame,(output[0],output[2]),(output[1],output[3]),(255,0,0),2)
 		print np.asarray(output)
 	else:
 		print "Ball Not detected"
 	l += 1
-	#cv2.imshow('frame',frame)
+	cv2.imshow('frame',frame)
 	#if cv2.waitKey(1) & 0xFF == ord('c'):
 	#	stringval = 'img' + str(i) +'.bmp'
 	#	cv2.imwrite(stringval,frame1)
@@ -45,5 +46,6 @@ end = time.clock()
 print 'time taken =',end - start,'seconds'
 print 'frame rate =',l/(end-start)
 
+cleanupf()
 cap.release()
 cv2.destroyAllWindows()
