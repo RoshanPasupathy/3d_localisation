@@ -13,6 +13,7 @@ import os
 from LUTptr3 import bgrhsvarrayl
 from LUTptr3 import bgrhsvarraylc
 from LUTptr4 import bgrhsvarray3
+from LUTptr4 import cleanupf
 from pylab import *
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import pyplot as plt
@@ -224,6 +225,7 @@ if len(densityfuncs) != 0:
 else:
         print 'No background pixels in the hue range 40 to 80' 
 ######
+cleanupf()
 cv2.destroyAllWindows()
 cap.release()
 plt.show()

@@ -3,7 +3,7 @@ import numpy as np
 cimport numpy as np
 import cv2
 from libc.stdlib cimport malloc,calloc,free
-
+from cpython.array cimport array
 ctypedef np.float_t FTYPE_t
 ctypedef np.uint8_t CTYPE_t
 ctypedef np.int64_t LTYPE_t
@@ -263,6 +263,110 @@ def squarelut7(int[::1] inputptr,int x, int y,unsigned char v,unsigned char[:,:,
 @cython.boundscheck(False)
 @cython.cdivision(True)
 @cython.wraparound(False)
+def squarelut8(int[::1] input,int x, int y,unsigned char v,unsigned char[:,:,::1] image): ###, bint *tablelut_ptr1=<bint *>tablelut_ptr)
+    cdef:
+        int* inputptr = &input[0]
+        unsigned char* img_ptr = &image[0,0,0]
+        
+        int yminscan = (inputptr[0]<= inputptr[1])*((v+1)*inputptr[0] > (v*inputptr[1]))*((v + 1)*inputptr[0] - (v*inputptr[1]))
+        int ymaxscan = ((inputptr[0]<= inputptr[1])*((v+1)*(inputptr[1]+1) < y + (v*inputptr[0]))*(((v+1)*(inputptr[1]+1)) - (v*inputptr[0]) - y)) + y
+        int deltay = ymaxscan-yminscan
+        int deltax = inputptr[5] - inputptr[4]
+        bint inc
+        bint *tablelut_ptr1=tablelut_ptr
+
+        int *x_outptr =<int *>malloc(deltax*deltay*sizeof(int))
+
+        int *y_outptr =<int *>malloc(deltay*sizeof(int))
+        
+        int[::1] output = np.array([ymaxscan-1,0,0,0,0,0], dtype = np.int32)
+        int* outputptr = &output[0]
+        
+        int x0,y0,i0
+        int i = 0
+        
+        #long pos[3]
+        #long* posptr = &pos[0]
+        long *posptr =<long *>malloc(2*sizeof(long))
+    y_outptr[1] = ymaxscan - 1 
+    for x0 in range(deltax):
+        posptr[0] = (x0 *y)
+        i0 = i
+        for y0 in range(yminscan,ymaxscan):
+            posptr[1] = 3 * (posptr[0] + y0)
+            inc = tablelut_ptr1[256*256*img_ptr[posptr[1]] + 256*img_ptr[posptr[1] +1] + img_ptr[posptr[1] + 2]]
+            i += inc
+            y_outptr[inc*(i - i0)] = y0
+            x_outptr[inc*i] = x0
+        #break out of loop if no pixel of ineterest detected in 3 lines
+        if x0 - x_outptr[i] > 2:
+            break
+        y_outptr[0] = 0
+        outputptr[0] += (y_outptr[1] - outputptr[0])*(outputptr[0] > y_outptr[1])
+        outputptr[1] += (y_outptr[i-i0] - outputptr[1])*(outputptr[1] < y_outptr[i - i0])
+    outputptr[2] = x_outptr[1] + inputptr[4]
+    outputptr[3] = x_outptr[i] + inputptr[4]
+    outputptr[4] = (outputptr[2]<= outputptr[3])*(((v+1)*outputptr[2]) > (v*outputptr[3]))* ((v + 1)*outputptr[2] - (v*outputptr[3]))
+    outputptr[5] = ((outputptr[2]<= outputptr[3])*((v+1)*(outputptr[3]+1) < x + (v*outputptr[2]))* (((v+1)*(outputptr[3]+1)) - (v*outputptr[2]) - x)) + x
+    free(x_outptr)
+    free(y_outptr)
+    free(posptr)
+    return output
+
+@cython.boundscheck(False)
+@cython.cdivision(True)
+@cython.wraparound(False)
+def squarelut9(int[::1] input,int x, int y,unsigned char v,unsigned char[:,:,::1] image): ###, bint *tablelut_ptr1=<bint *>tablelut_ptr)
+    cdef:
+        int* inputptr = &input[0]
+        unsigned char* img_ptr = &image[0,0,0]
+        
+        int yminscan = (inputptr[0]<= inputptr[1])*((v+1)*inputptr[0] > (v*inputptr[1]))*((v + 1)*inputptr[0] - (v*inputptr[1]))
+        int ymaxscan = ((inputptr[0]<= inputptr[1])*((v+1)*(inputptr[1]+1) < y + (v*inputptr[0]))*(((v+1)*(inputptr[1]+1)) - (v*inputptr[0]) - y)) + y
+        int deltay = ymaxscan-yminscan
+        int deltax = inputptr[5] - inputptr[4]
+        bint inc
+        bint *tablelut_ptr1=tablelut_ptr
+
+        int *x_outptr =<int *>malloc(deltax*deltay*sizeof(int))
+
+        int *y_outptr =<int *>malloc(deltay*sizeof(int))
+        
+        int[::1] output = array('i',[ymaxscan-1,0,0,0,0,0])
+        int* outputptr = &output[0]
+        
+        int x0,y0,i0
+        int i = 0
+        
+        long *posptr =<long *>malloc(2*sizeof(long))
+    y_outptr[1] = ymaxscan - 1 
+    for x0 in range(deltax):
+        posptr[0] = (x0 *y)
+        i0 = i
+        for y0 in range(yminscan,ymaxscan):
+            posptr[1] = 3 * (posptr[0] + y0)
+            inc = tablelut_ptr1[256*256*img_ptr[posptr[1]] + 256*img_ptr[posptr[1] +1] + img_ptr[posptr[1] + 2]]
+            i += inc
+            y_outptr[inc*(i - i0)] = y0
+            x_outptr[inc*i] = x0
+        #break out of loop if no pixel of ineterest detected in 3 lines
+        if x0 - x_outptr[i] > 2:
+            break
+        y_outptr[0] = 0
+        outputptr[0] += (y_outptr[1] - outputptr[0])*(outputptr[0] > y_outptr[1])
+        outputptr[1] += (y_outptr[i-i0] - outputptr[1])*(outputptr[1] < y_outptr[i - i0])
+    outputptr[2] = x_outptr[1] + inputptr[4]
+    outputptr[3] = x_outptr[i] + inputptr[4]
+    outputptr[4] = (outputptr[2]<= outputptr[3])*(((v+1)*outputptr[2]) > (v*outputptr[3]))* ((v + 1)*outputptr[2] - (v*outputptr[3]))
+    outputptr[5] = ((outputptr[2]<= outputptr[3])*((v+1)*(outputptr[3]+1) < x + (v*outputptr[2]))* (((v+1)*(outputptr[3]+1)) - (v*outputptr[2]) - x)) + x
+    free(x_outptr)
+    free(y_outptr)
+    free(posptr)
+    return output
+
+@cython.boundscheck(False)
+@cython.cdivision(True)
+@cython.wraparound(False)
 def bgrhsv(unsigned char[:,:,::1] image,long x, long y):
     cdef:
         unsigned char[:,:,::1] output = np.zeros((x,y,3),dtype = np.uint8)
@@ -373,7 +477,7 @@ def bgrhsvarray3(unsigned char[:,:,::1] img_ptr,long x=480,long y=640):
         #unsigned long* colptr = &colourscat[0,0,0]
         long x0,y0
         double b,g,r
-        long hue,saturation
+        long hue,saturation,val
         double chroma
     for x0 in range(x):
         for y0 in range(y):
@@ -394,7 +498,8 @@ def bgrhsvarray3(unsigned char[:,:,::1] img_ptr,long x=480,long y=640):
                 saturation = int(255* chroma/(r * 1.0))
             else:
                 saturation = 0
-            colptr[hue,saturation,int(r)] += 1
+            val = int(r)
+            colptr[hue,saturation,val] += 1
     return colptr
 
 @cython.boundscheck(False)
