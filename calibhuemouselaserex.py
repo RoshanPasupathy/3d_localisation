@@ -12,7 +12,7 @@ import cv2
 import os
 from LUTptr3 import bgrhsvarrayl
 from LUTptr3 import bgrhsvarraylc
-from LUTptr3 import bgrhsvarray3
+from LUTptr4 import bgrhsvarray3
 from pylab import *
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import pyplot as plt
@@ -122,10 +122,10 @@ while running:
     
     if keyPressed == ord('s'):
         print "You pressed s. Please wait"
-    	Backgroundval = frame
+    	Backgroundval = frame.copy()
     	#h,w,c = Backgroundval.shape
     	#print w,h
-    	filterscene = np.asarray(bgrhsvarray3(Backgroundval,0,480,0,640))
+    	filterscene = np.asarray(bgrhsvarray3(Backgroundval))
         colourscene += filterscene
         cv2.imshow('video', Backgroundval[0:480,0:640])
         cv2.waitKey(1000)

@@ -10,7 +10,7 @@ ctypedef np.int64_t LTYPE_t
 ctypedef np.uint32_t DTYPE_t
 
 # creates pointer to memory stack and initiates all values to 0
-cdef unsigned char *tablelut_ptr = <unsigned char *>calloc(256*256*256,sizeof(unsigned char))
+cdef bint *tablelut_ptr = <bint *>calloc(256*256*256,sizeof(bint))
 
 @cython.boundscheck(False)
 @cython.cdivision(True)
@@ -143,7 +143,7 @@ def squarelut5(long[::1] input,long x, long y,unsigned char v,unsigned char[:,:,
 @cython.boundscheck(False)
 @cython.cdivision(True)
 @cython.wraparound(False)
-def squarelut6(long[::1] input,long x, long y,unsigned char v,unsigned char[:,:,::1] image, unsigned char *tablelut_ptr1=tablelut_ptr):
+def squarelut6(long[::1] input,long x, long y,unsigned char v,unsigned char[:,:,::1] image): ###, bint *tablelut_ptr1=<bint *>tablelut_ptr)
     cdef:
         long* inputptr = &input[0]
         long xminscan = (inputptr[2]<= inputptr[3])*((v+1)*inputptr[2] > (v*inputptr[3]))*((v + 1)*inputptr[2] - (v*inputptr[3]))
@@ -154,6 +154,7 @@ def squarelut6(long[::1] input,long x, long y,unsigned char v,unsigned char[:,:,
         long deltay = ymaxscan - yminscan
         unsigned char* img_ptr = &image[0,0,0]
         unsigned char inc
+        bint *tablelut_ptr1=tablelut_ptr
         
         #long[::1] x_out = np.zeros((deltax*deltay), dtype = np.int32)
         #long* x_outptr = &x_out[0]
@@ -201,6 +202,63 @@ def squarelut6(long[::1] input,long x, long y,unsigned char v,unsigned char[:,:,
     free(y_outptr)
     return outputptr
 
+@cython.boundscheck(False)
+@cython.cdivision(True)
+@cython.wraparound(False)
+def squarelut7(int[::1] inputptr,int x, int y,unsigned char v,unsigned char[:,:,::1] image): ###, bint *tablelut_ptr1=<bint *>tablelut_ptr)
+    cdef:
+        #int* inputptr = &input[0]
+        int yminscan = (inputptr[0]<= inputptr[1])*((v+1)*inputptr[0] > (v*inputptr[1]))*((v + 1)*inputptr[0] - (v*inputptr[1]))
+        int ymaxscan = ((inputptr[0]<= inputptr[1])*((v+1)*(inputptr[1]+1) < y + (v*inputptr[0]))*(((v+1)*(inputptr[1]+1)) - (v*inputptr[0]) - y)) + y
+        int deltax = inputptr[5] - inputptr[4]
+        int deltay = ymaxscan - yminscan
+        unsigned char* img_ptr = &image[0,0,0]
+        unsigned char inc
+        bint *tablelut_ptr1=tablelut_ptr
+
+        int *x_outptr =<int *>malloc(deltax*deltay*sizeof(int))
+
+        int *y_outptr =<int *>malloc(deltay*sizeof(int))
+        
+        int[::1] outputptr = np.array([deltay-1,0,0,0,0,0], dtype = np.int32)
+        #long* outputptr = &output[0]
+        
+        int x0,y0,i0
+        int i = 0
+        
+        #long pos[3]
+        #long* posptr = &pos[0]
+        long *posptr =<long *>malloc(3*sizeof(long))
+    posptr[0] = yminscan
+    y_outptr[1] = deltay - 1 
+    for x0 in range(deltax):
+        posptr[1] = posptr[0] + (x0 *y)
+        i0 = i
+        for y0 in range(deltay):
+            posptr[2] = 3 * (posptr[1] + y0)
+            inc = tablelut_ptr1[256*256*img_ptr[posptr[2]] + 256*img_ptr[posptr[2] +1] + img_ptr[posptr[2] + 2]]
+            #inc = tablelut_ptr[256*256*img_ptr[3*((xminscan + x0)*y + y0 + yminscan)] + 256*img_ptr[3*((xminscan + x0)*y + y0 + yminscan) +1] + img_ptr[3*((xminscan + x0)*y + y0 + yminscan) + 2]]
+            i += inc
+            y_outptr[inc*(i - i0)] = y0
+            x_outptr[inc*i] = x0
+        #break out of loop if no pixel of ineterest detected in 3 lines
+        if x0 - x_outptr[i] > 2:
+            break
+        y_outptr[0] = 0
+        outputptr[0] += (y_outptr[1] - outputptr[0])*(outputptr[0] > y_outptr[1])
+        outputptr[1] += (y_outptr[i-i0] - outputptr[1])*(outputptr[1] < y_outptr[i - i0])
+        #yrmin += (y_outptr[1] - yrmin)*(yrmin > y_outptr[1])
+        #yrmax += (y_outptr[i-i0] - yrmax)*(yrmax < y_outptr[i - i0])
+    outputptr[0] += yminscan
+    outputptr[1] += yminscan
+    outputptr[2] = x_outptr[1] + inputptr[4]
+    outputptr[3] = x_outptr[i] + inputptr[4]
+    outputptr[4] = (outputptr[2]<= outputptr[3])*(((v+1)*outputptr[2]) > (v*outputptr[3]))* ((v + 1)*outputptr[2] - (v*outputptr[3]))
+    outputptr[5] = ((outputptr[2]<= outputptr[3])*((v+1)*(outputptr[3]+1) < x + (v*outputptr[2]))* (((v+1)*(outputptr[3]+1)) - (v*outputptr[2]) - x)) + x
+    free(x_outptr)
+    free(posptr)
+    free(y_outptr)
+    return outputptr
 
 @cython.boundscheck(False)
 @cython.cdivision(True)
@@ -308,22 +366,20 @@ def bgrhsvarray2(unsigned char[:,:,::1] image,long xmin,long xmax,long ymin, lon
 @cython.boundscheck(False)
 @cython.cdivision(True)
 @cython.wraparound(False)
-def bgrhsvarray3(unsigned char[:,:,::1] image,long xmin,long xmax,long ymin, long ymax):
+def bgrhsvarray3(unsigned char[:,:,::1] img_ptr,long x=480,long y=640):
     cdef:
-        unsigned char* img_ptr = &image[0,0,0]
-        unsigned long[:,:,::1] colourscat = np.zeros((256,256,256),dtype = np.uint32)
-        unsigned long* colptr = &colourscat[0,0,0]
+        #unsigned char* img_ptr = &image[0,0,0]
+        unsigned long[:,:,::1] colptr = np.zeros((256,256,256),dtype = np.uint32)
+        #unsigned long* colptr = &colourscat[0,0,0]
         long x0,y0
         double b,g,r
         long hue,saturation
         double chroma
-        long deltax = xmax - xmin
-        long deltay = ymax - ymin
-    for x0 in range(deltax):
-        for y0 in range(deltay):
-            b = img_ptr[3*(((xmin +x0)* 640) + y0 + ymin)]
-            g = img_ptr[3*(((xmin +x0)* 640) + y0 + ymin) + 1]
-            r = img_ptr[3*(((xmin +x0)* 640) + y0 + ymin) + 2]
+    for x0 in range(x):
+        for y0 in range(y):
+            b = img_ptr[x0,y0,0]
+            g = img_ptr[x0,y0,1]
+            r = img_ptr[x0,y0,2]
             K = 0
             if g < b:
                 g,b = b,g
@@ -338,8 +394,8 @@ def bgrhsvarray3(unsigned char[:,:,::1] image,long xmin,long xmax,long ymin, lon
                 saturation = int(255* chroma/(r * 1.0))
             else:
                 saturation = 0
-            colptr[(256*256*hue) + (256*saturation)+int(r)] += 1
-    return colourscat
+            colptr[hue,saturation,int(r)] += 1
+    return colptr
 
 @cython.boundscheck(False)
 @cython.cdivision(True)

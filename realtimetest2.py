@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 import os
-from LUTptr4 import squarelut6
+from LUTptr4 import squarelut7
 from LUTptr4 import cleanupf
 import time
 
@@ -19,7 +19,7 @@ cap.set(cv2.cv.CV_CAP_PROP_FPS, 30)
 b = cap.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT)
 c = cap.get(cv2.cv.CV_CAP_PROP_FRAME_WIDTH)
 print b,c
-output = np.array([0,640,0,480])
+output = np.array([0,640,0,480,0,480])
 
 l = 1
 i = 1
@@ -27,10 +27,10 @@ start = time.clock()
 while (True) & ( l < 100):
 	ret,frame = cap.read()
 	#frame1 = frame.copy()
-	output = squarelut6(output,480,640,10,frame)
+	output = squarelut7(output,480,640,10,frame[output[4]:output[5],:,:])
 	if output[0] <= output[1]:
 		#cv2.rectangle(frame,(output[0],output[2]),(output[1],output[3]),(255,0,0),2)
-		print np.asarray(output)
+		print np.asarray(output)[0:4]
 	else:
 		print "Ball Not detected"
 	l += 1
