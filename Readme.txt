@@ -2,7 +2,7 @@ Readme file
 
 binarytester.py 
 """creates a thresholded image based on given parameters"""
-modules: LUTptr2 - bgrhsv, matplotlib, os, time,cv2, numpy
+modules: LUTptrallr - bgrhsv, matplotlib, os, time,cv2, numpy
 comments: quite obsolete used for checking if ranges are correct and detect specs in background
 
 calibcap.py
@@ -12,12 +12,12 @@ comments: Use for intrinsic calibration. Can capture images from three hundred l
 
 calibhue.py
 """plots hue,saturation and value for objects present in the rectangle in the frame"""
-modules: LUTptr2 - bgrhsvarray2, matplotlib, os, time,cv2, numpy
+modules: LUTptrallr - bgrhsvarray2, matplotlib, os, time,cv2, numpy
 comments: press c to capture. calibhuemouse is better
 
 calibhuemouse1.py
 """plots hue,saturation and value for 3 selected objects"""
-modules: LUTptr2 - bgrhsvarray2, matplotlib, os, time,cv2, numpy
+modules: LUTptrallr - bgrhsvarray2, matplotlib, os, time,cv2, numpy
 comments: press s to select
 
 calibhuemouselaserex.py
@@ -61,7 +61,7 @@ comments: Adjust cornersubpix - not as accurate as expected
 
 realtime2.py
 """shows detected object"""
-modules: LUTptr3 (changed from LUTptr2) - squarelut5, matplotlib, os, time,cv2, numpy
+modules: LUTptr3 (changed from LUTptralls) - squarelut5, matplotlib, os, time,cv2, numpy
 comments: comment out rectangle and imshow for speed
 
 undistort.py
