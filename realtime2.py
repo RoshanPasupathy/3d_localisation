@@ -1,7 +1,8 @@
 import numpy as np
 import cv2
 import os
-from LUTptr3 import squarelut6
+from LUTptralls import squarelut6
+from LUTptralls import cleanupf
 import time
 
 os.system('v4l2-ctl -d 0 -c focus_auto=0')
@@ -45,5 +46,6 @@ end = time.clock()
 print 'time taken =',end - start,'seconds'
 print 'frame rate =',l/(end-start)
 
+cleanupf()
 cap.release()
 cv2.destroyAllWindows()

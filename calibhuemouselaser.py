@@ -10,7 +10,8 @@ import numpy as np
 #matplotlib.use('QT4Agg')
 import cv2
 import os
-from LUTptr3 import bgrhsvarrayl
+from LUTptrallr import bgrhsvarrayl
+from LUTptrallr import cleanupf
 from pylab import *
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import pyplot as plt
@@ -144,6 +145,7 @@ while running:
 #ax.set_ylabel('Saturation')
 #ax.set_zlabel('Value')
 ##plt.ion()
+cleanupf()
 cv2.destroyAllWindows()
 cap.release()
 #plt.show()

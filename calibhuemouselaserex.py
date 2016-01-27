@@ -10,10 +10,10 @@ import numpy as np
 #matplotlib.use('QT4Agg')
 import cv2
 import os
-from LUTptr3 import bgrhsvarrayl
-from LUTptr3 import bgrhsvarraylc
-from LUTptr4 import bgrhsvarray3
-from LUTptr4 import cleanupf
+from LUTptrallr import bgrhsvarrayl
+from LUTptrallr import bgrhsvarraylc
+from LUTptrallr import bgrhsvarray3
+from LUTptrallr import cleanupf
 from pylab import *
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import pyplot as plt

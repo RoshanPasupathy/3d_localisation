@@ -3,7 +3,8 @@ import cv2
 from matplotlib import pyplot as plt
 import os
 import time
-from LUTptr2 import bgrhsv 
+from LUTptrallr import bgrhsv
+from LUTptrallr import cleanupf
 
 os.system('v4l2-ctl -d 0 -c focus_auto=0')
 os.system('v4l2-ctl -d 0 -c focus_absolute=0')
@@ -40,5 +41,7 @@ while (True) & ( i < 2):
 end = time.time()
 print 'time elapsed = %f s' %(end - start)
 print 'frame rate = %f' %(l/(end - start))
+
+cleanupf()
 cap.release()
 cv2.destroyAllWindows()

@@ -10,7 +10,8 @@ import matplotlib
 matplotlib.use('tkagg')
 import cv2
 import os
-from LUTptr2 import bgrhsvarray3
+from LUTptrallr import bgrhsvarray3c
+from LUTptrallr import cleanupf
 from pylab import *
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import pyplot as plt
@@ -141,6 +142,7 @@ ax.set_xlabel('Hue')
 ax.set_ylabel('Saturation')
 ax.set_zlabel('Value')
 #plt.ion()
+cleanupf()
 cv2.destroyAllWindows()
 cap.release()
 plt.show()

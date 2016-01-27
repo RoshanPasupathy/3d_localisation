@@ -9,7 +9,8 @@ import numpy as np
 import cv2
 from matplotlib import pyplot as plt
 import os
-from LUTptr2 import bgrhsvarray2 
+from LUTptrallr import bgrhsvarray2
+from LUTptrallr import cleanupf 
 
 #set camera parameters
 os.system('v4l2-ctl -d 0 -c focus_auto=0')
@@ -134,6 +135,7 @@ plt.figure(2)
 plt.plot(xaxis,valueaxis,'go')
 plt.ylabel('Value')
 
+cleanupf()
 cv2.destroyAllWindows()
 cap.release()
 plt.show()
