@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 import os
-from LUTptr4 import squarelut8
+from LUTptr4 import squarelut9
 from LUTptr4 import cleanupf
 import time
 
@@ -27,7 +27,7 @@ start = time.clock()
 while (True) & ( l < 60):
 	ret,frame = cap.read()
 	#frame1 = frame.copy()
-	output = squarelut8(output,480,640,10,frame[output[4]:output[5],:,:])
+	output = squarelut9(output,480,640,10,frame[output[4]:output[5],:,:])
 	if output[0] <= output[1]:
 		#cv2.rectangle(frame,(output[0],output[2]),(output[1],output[3]),(255,0,0),2)
 		print np.asarray(output)[0:4]

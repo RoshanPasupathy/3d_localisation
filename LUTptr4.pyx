@@ -273,21 +273,21 @@ def squarelut8(int[::1] input,int x, int y,unsigned char v,unsigned char[:,:,::1
         int deltay = ymaxscan-yminscan
         int deltax = inputptr[5] - inputptr[4]
         bint inc
+        bint xpos = 0
         bint *tablelut_ptr1=tablelut_ptr
 
-        int *x_outptr =<int *>malloc(deltax*deltay*sizeof(int))
+        int *x_outptr =<int *>malloc(2*sizeof(int))
 
         int *y_outptr =<int *>malloc(deltay*sizeof(int))
         
-        int[::1] output = np.array([ymaxscan-1,0,0,0,0,0], dtype = np.int32)
+        int[::1] output = array('i',[ymaxscan-1,0,0,0,0,0])
         int* outputptr = &output[0]
         
         int x0,y0,i0
         int i = 0
         
-        #long pos[3]
-        #long* posptr = &pos[0]
         long *posptr =<long *>malloc(2*sizeof(long))
+    x_outptr[1] = deltax - 1
     y_outptr[1] = ymaxscan - 1 
     for x0 in range(deltax):
         posptr[0] = (x0 *y)
@@ -297,15 +297,18 @@ def squarelut8(int[::1] input,int x, int y,unsigned char v,unsigned char[:,:,::1
             inc = tablelut_ptr1[256*256*img_ptr[posptr[1]] + 256*img_ptr[posptr[1] +1] + img_ptr[posptr[1] + 2]]
             i += inc
             y_outptr[inc*(i - i0)] = y0
-            x_outptr[inc*i] = x0
+        #i > i0 if row contains a valid pixel. add 0 contains first value. add 1 contains latest value 
+        if i > i0:
+            x_outptr[xpos] = x0
+            xpos = 1
         #break out of loop if no pixel of ineterest detected in 3 lines
-        if x0 - x_outptr[i] > 2:
+        elif x0 - x_outptr[1] > 2:
             break
         y_outptr[0] = 0
         outputptr[0] += (y_outptr[1] - outputptr[0])*(outputptr[0] > y_outptr[1])
         outputptr[1] += (y_outptr[i-i0] - outputptr[1])*(outputptr[1] < y_outptr[i - i0])
-    outputptr[2] = x_outptr[1] + inputptr[4]
-    outputptr[3] = x_outptr[i] + inputptr[4]
+    outputptr[2] = x_outptr[0] + inputptr[4]
+    outputptr[3] = x_outptr[1] + inputptr[4]
     outputptr[4] = (outputptr[2]<= outputptr[3])*(((v+1)*outputptr[2]) > (v*outputptr[3]))* ((v + 1)*outputptr[2] - (v*outputptr[3]))
     outputptr[5] = ((outputptr[2]<= outputptr[3])*((v+1)*(outputptr[3]+1) < x + (v*outputptr[2]))* (((v+1)*(outputptr[3]+1)) - (v*outputptr[2]) - x)) + x
     free(x_outptr)
