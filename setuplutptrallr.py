@@ -1,6 +1,11 @@
 from distutils.core import setup
-from Cython.Build import cythonize
+from distutils.extension import Extension
+from Cython.Distutils import build_ext
 
-setup(name="LUTptrallr",
-      ext_modules = cythonize("/home/pi/ip/LUTptr2=allr.pyx")
+ext_modules=[Extension("LUTptrallr",["/home/pi/ip/LUTptrallr.pyx"],library_dirs=['.'])]
+
+setup(
+    name="LUTptrallsp",
+    cmdclass={"build_ext":build_ext},
+    ext_modules= ext_modules
 )

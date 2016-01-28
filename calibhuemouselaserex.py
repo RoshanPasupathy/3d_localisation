@@ -139,7 +139,7 @@ while running:
     if not scene:
         cv2.imshow('video', frame)
 
-    if picturestaken == 1:
+    if picturestaken == 4:
     	running = False
     
 fig = plt.figure(figsize = (8,6))

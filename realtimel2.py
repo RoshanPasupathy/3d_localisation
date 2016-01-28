@@ -1,8 +1,8 @@
 import numpy as np
 import cv2
 import os
-from LUTptrallsp import squarelut8
-from LUTptrallsp import cleanupf
+from LUTptrallr import squarelut8
+from LUTptrallr import cleanupf
 import time
 
 os.system('v4l2-ctl -d 0 -c focus_auto=0')

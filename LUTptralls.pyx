@@ -192,7 +192,10 @@ def squarelut8(int[::1] output,int x, int y,unsigned char v,unsigned char[:,:,::
         long *posptr =<long *>malloc(2*sizeof(long))
     outputptr[0] = ymaxscan-1
     outputptr[1] = 0
+    
+    x_outptr[0] = deltax
     x_outptr[1] = deltax - 1
+    
     y_outptr[1] = ymaxscan - 1 
     for x0 in range(deltax):
         posptr[0] = (x0 *y)
@@ -202,20 +205,23 @@ def squarelut8(int[::1] output,int x, int y,unsigned char v,unsigned char[:,:,::
             inc = tablelut_ptr1[256*256*img_ptr[posptr[1]] + 256*img_ptr[posptr[1] +1] + img_ptr[posptr[1] + 2]]
             i += inc
             y_outptr[inc*(i - i0)] = y0
-        #i > i0 if row contains a valid pixel. add 0 contains first value. add 1 contains latest value 
+        #i > i0 if row contains a valid pixel. add 0 contains first value. add 1 contains latest value
         if i > i0:
             x_outptr[xpos] = x0
             xpos = 1
-        #break out of loop if no pixel of ineterest detected in 3 lines
+            outputptr[0] += (y_outptr[1] - outputptr[0])*(outputptr[0] > y_outptr[1])
+            outputptr[1] += (y_outptr[i-i0] - outputptr[1])*(outputptr[1] < y_outptr[i - i0])
+            # change search area 
+            ymaxscan += (outputptr[1] + 5 -ymaxscan) * (outputptr[1] + 5 < ymaxscan) 
+        #break out of loop if no pixel of ineterest detected in 3 lines after xpos switched on
         elif x0 - x_outptr[1] > 2:
-            break
-        y_outptr[0] = 0
-        outputptr[0] += (y_outptr[1] - outputptr[0])*(outputptr[0] > y_outptr[1])
-        outputptr[1] += (y_outptr[i-i0] - outputptr[1])*(outputptr[1] < y_outptr[i - i0])
-    outputptr[2] = x_outptr[0] + outputptr[4]
-    outputptr[3] = x_outptr[1] + outputptr[4]
-    outputptr[4] = (outputptr[2]<= outputptr[3])*(((v+1)*outputptr[2]) > (v*outputptr[3]))* ((v + 1)*outputptr[2] - (v*outputptr[3]))
-    outputptr[5] = ((outputptr[2]<= outputptr[3])*((v+1)*(outputptr[3]+1) < x + (v*outputptr[2]))* (((v+1)*(outputptr[3]+1)) - (v*outputptr[2]) - x)) + x
+            break        
+    outputptr[2] = x_outptr[0] + outputptr[4] #if none detected outputptr[2] = deltax + image start
+    outputptr[3] = x_outptr[1] + outputptr[4] #if none detected outputptr[3] = delatx - 1 + imagestart
+    #if none detected outputptr[4] = 0 and outputptr[5] = x
+    #if search area crosses x or becomes negative second condition switches off    
+    outputptr[4] = (outputptr[2]<= outputptr[3])  *  (((v+1)*outputptr[2]) > (v*outputptr[3]))  *  ((v + 1)*outputptr[2] - (v*outputptr[3]))
+    outputptr[5] = ((outputptr[2]<= outputptr[3]) *  ((v+1)*(outputptr[3]+1) < x + (v*outputptr[2]))  * (((v+1)*(outputptr[3]+1)) - (v*outputptr[2]) - x)) + x
     freep(x_outptr)
     freep(y_outptr)
     freep(posptr)
