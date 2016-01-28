@@ -2,10 +2,7 @@ cimport cython
 import numpy as np
 cimport numpy as np
 import cv2
-from libc.stdlib cimport calloc,free
-from cpython.mem cimport PyMem_Malloc as malloc
-from cpython.mem cimport PyMem_Free as freep
-
+from libc.stdlib cimport malloc,calloc,free
 from cpython.array cimport array
 ctypedef np.float_t FTYPE_t
 ctypedef np.uint8_t CTYPE_t
@@ -105,7 +102,7 @@ tablegen(40,80,-1.0,100.0,-0.651162,242.7906,40.0) #consider changing thresh to 
 @cython.wraparound(False)
 def squarelut6(long[::1] input,long x, long y,unsigned char v,unsigned char[:,:,::1] image): ###, bint *tablelut_ptr1=<bint *>tablelut_ptr)
     cdef:
-        long* inputptr= &input[0]
+        long* inputptr = &input[0]
         long xminscan = (inputptr[2]<= inputptr[3])*((v+1)*inputptr[2] > (v*inputptr[3]))*((v + 1)*inputptr[2] - (v*inputptr[3]))
         long yminscan = (inputptr[0]<= inputptr[1])*((v+1)*inputptr[0] > (v*inputptr[1]))*((v + 1)*inputptr[0] - (v*inputptr[1]))
         long xmaxscan = ((inputptr[2]<= inputptr[3])*((v+1)*(inputptr[3]+1) < x + (v*inputptr[2]))*(((v+1)*(inputptr[3]+1)) - (v*inputptr[2]) - x)) + x
@@ -157,24 +154,24 @@ def squarelut6(long[::1] input,long x, long y,unsigned char v,unsigned char[:,:,
         #yrmax += (y_outptr[i-i0] - yrmax)*(yrmax < y_outptr[i - i0])
     outputptr[2] = x_outptr[1]
     outputptr[3] = x_outptr[i]
-    freep(x_outptr)
-    freep(posptr)
-    freep(y_outptr)
+    free(x_outptr)
+    free(posptr)
+    free(y_outptr)
     return outputptr
 
 
 @cython.boundscheck(False)
 @cython.cdivision(True)
 @cython.wraparound(False)
-def squarelut8(int[::1] output,int x, int y,unsigned char v,unsigned char[:,:,::1] image): ###, bint *tablelut_ptr1=<bint *>tablelut_ptr)
+def squarelut8(int[::1] input,int x, int y,unsigned char v,unsigned char[:,:,::1] image): ###, bint *tablelut_ptr1=<bint *>tablelut_ptr)
     cdef:
-        int* outputptr = &output[0]
+        int* inputptr = &input[0]
         unsigned char* img_ptr = &image[0,0,0]
         
-        int yminscan = (outputptr[0]<= outputptr[1])*((v+1)*outputptr[0] > (v*outputptr[1]))*((v + 1)*outputptr[0] - (v*outputptr[1]))
-        int ymaxscan = ((outputptr[0]<= outputptr[1])*((v+1)*(outputptr[1]+1) < y + (v*outputptr[0]))*(((v+1)*(outputptr[1]+1)) - (v*outputptr[0]) - y)) + y
+        int yminscan = (inputptr[0]<= inputptr[1])*((v+1)*inputptr[0] > (v*inputptr[1]))*((v + 1)*inputptr[0] - (v*inputptr[1]))
+        int ymaxscan = ((inputptr[0]<= inputptr[1])*((v+1)*(inputptr[1]+1) < y + (v*inputptr[0]))*(((v+1)*(inputptr[1]+1)) - (v*inputptr[0]) - y)) + y
         int deltay = ymaxscan-yminscan
-        int deltax = outputptr[5] - outputptr[4]
+        int deltax = inputptr[5] - inputptr[4]
         bint inc
         bint xpos = 0
         bint *tablelut_ptr1=tablelut_ptr
@@ -183,15 +180,13 @@ def squarelut8(int[::1] output,int x, int y,unsigned char v,unsigned char[:,:,::
 
         int *y_outptr =<int *>malloc(deltay*sizeof(int))
         
-        #int[::1] output = array('i',[ymaxscan-1,0,0,0,0,0])
-        #int* outputptr = &output[0]
+        int[::1] output = array('i',[ymaxscan-1,0,0,0,0,0])
+        int* outputptr = &output[0]
         
         int x0,y0,i0
         int i = 0
         
         long *posptr =<long *>malloc(2*sizeof(long))
-    outputptr[0] = ymaxscan-1
-    outputptr[1] = 0
     x_outptr[1] = deltax - 1
     y_outptr[1] = ymaxscan - 1 
     for x0 in range(deltax):
@@ -212,13 +207,13 @@ def squarelut8(int[::1] output,int x, int y,unsigned char v,unsigned char[:,:,::
         y_outptr[0] = 0
         outputptr[0] += (y_outptr[1] - outputptr[0])*(outputptr[0] > y_outptr[1])
         outputptr[1] += (y_outptr[i-i0] - outputptr[1])*(outputptr[1] < y_outptr[i - i0])
-    outputptr[2] = x_outptr[0] + outputptr[4]
-    outputptr[3] = x_outptr[1] + outputptr[4]
+    outputptr[2] = x_outptr[0] + inputptr[4]
+    outputptr[3] = x_outptr[1] + inputptr[4]
     outputptr[4] = (outputptr[2]<= outputptr[3])*(((v+1)*outputptr[2]) > (v*outputptr[3]))* ((v + 1)*outputptr[2] - (v*outputptr[3]))
     outputptr[5] = ((outputptr[2]<= outputptr[3])*((v+1)*(outputptr[3]+1) < x + (v*outputptr[2]))* (((v+1)*(outputptr[3]+1)) - (v*outputptr[2]) - x)) + x
-    freep(x_outptr)
-    freep(y_outptr)
-    freep(posptr)
+    free(x_outptr)
+    free(y_outptr)
+    free(posptr)
     return output
 
 #used by binary tester
