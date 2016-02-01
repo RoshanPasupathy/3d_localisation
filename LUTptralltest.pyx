@@ -381,7 +381,7 @@ def lineplotter(np.ndarray saturation, np.ndarray val, int valthresh):
       np.ndarray outputmax = 2.0 * np.ones(len(newsat),dtype = np.float64)
       int posmin = np.where(carray == min(carray))[0][0]
       int posmax = np.where(carray == max(carray))[0][0]
-      int i
+      int i, maxlinepos,minlinepos
       np.ndarray outarray = np.zeros(4, dtype = np.float64)
     for i in range(len(carray)):
       if newsat[i] != newsat[posmin]:
@@ -395,11 +395,6 @@ def lineplotter(np.ndarray saturation, np.ndarray val, int valthresh):
     outarray[0] = (newval[minlinepos] - newval[posmin])/(1.0 * (newsat[minlinepos] - newsat[posmin]))
     outarray[1] = (newsat[minlinepos]*newval[posmin] - newval[minlinepos]*newsat[posmin])/(1.0 * (newsat[minlinepos] - newsat[posmin]))
     return outarray
-    
-    
-      
-
-  
 
 #used by calibhuemouselaser
 @cython.boundscheck(False)
