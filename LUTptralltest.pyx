@@ -374,8 +374,8 @@ def bgrhsvarray3c(unsigned char[:,:,::1] image,long xmin,long xmax,long ymin, lo
 def lineplotter(np.ndarray saturation, np.ndarray val, int valthresh):
     assert saturation.dtype == np.int and val.dtype == np.int
     cdef:
-      np.ndarray newsat = saturation[np.where(val[:] >= thresh)]
-      np.ndarray newval = val[np.where(val[:] >= thresh)]
+      np.ndarray newsat = saturation[np.where(val[:] >= valthresh)]
+      np.ndarray newval = val[np.where(val[:] >= valthresh)]
       np.ndarray carray = newsat + newval
       np.ndarray outputmin = 2.0 * np.ones(len(newsat),dtype = np.float64)
       np.ndarray outputmax = 2.0 * np.ones(len(newsat),dtype = np.float64)

@@ -10,10 +10,11 @@ import numpy as np
 #matplotlib.use('QT4Agg')
 import cv2
 import os
-from LUTptrallr import bgrhsvarrayl
-from LUTptrallr import bgrhsvarraylc
-from LUTptrallr import bgrhsvarray3
-from LUTptrallr import cleanupf
+from LUTptralltest import bgrhsvarrayl
+from LUTptralltest import bgrhsvarraylc
+from LUTptralltest import bgrhsvarray3
+from LUTptralltest import cleanupf
+from LUTptralltest import lineplotter
 from pylab import *
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import pyplot as plt
@@ -139,7 +140,7 @@ while running:
     if not scene:
         cv2.imshow('video', frame)
 
-    if picturestaken == 1:
+    if picturestaken == 2:
     	running = False
     
 fig = plt.figure(figsize = (8,6))
@@ -197,7 +198,25 @@ colours3 = cm.cool(densityfunc/max(densityfunc))
 colmap3 = cm.ScalarMappable(cmap = cm.cool)
 colmap3.set_array(densityfunc/max(densityfunc))
 
+ax2.set_xlim([0,255])
+ax2.set_ylim([0,255])
+slopes = lineplotter(satdata,valdata,30)
+slopes[1] = slopes[1] - 10
+slopes[3] = slopes[3] + 10
+x0min = 0 
+x1min = -slopes[1]/(1.0 * slopes[0])
+y0min = slopes[1]
+y1min = 0
+
+x0max = 0
+x1max = -slopes[3]/(1.0 * slopes[2])
+y0max = slopes[3]
+y1max = 0
+
 ax2.scatter(satdata,valdata, c=colours3,marker='o')
+ax2.plot([x0min,x1min],[y0min,y1min],'-g')
+ax2.plot([x0max,x1max],[y0max,y1max],'-g') 
+
 cb3 = fig2.colorbar(colmap3,shrink=0.75)
 cb3.set_label('frequency')
 ax2.set_xlabel('Saturation')

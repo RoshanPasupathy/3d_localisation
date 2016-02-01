@@ -93,7 +93,7 @@ cdef unsigned char[:,:,::1] tablegen2(long hmin,long hmax,long smin, long smax, 
 #####cdef unsigned char[:,:,::1] tablelut = tablegen(40,80,-1.0,100.0,-0.651162,242.7906,10.0) #consider changing thresh to 15.0 or 20.0 
 #####cdef unsigned char* tablelut_ptr = &tablelut[0,0,0]
 
-tablegen(40,80,-1.0,100.0,-0.651162,242.7906,40.0) #consider changing thresh to >40
+tablegen(40,80,-0.6,100.0,-0.64,252.0,40.0) #consider changing thresh to >40
 
 #cdef long[::1] x_out = np.zeros((480*640), dtype = np.int32)
 #cdef long* x_outptr = &x_out[0]
