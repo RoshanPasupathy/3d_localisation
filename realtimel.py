@@ -1,8 +1,8 @@
 import numpy as np
 import cv2
 import os
-from LUTptralls import squarelut8
-from LUTptralls import cleanupf
+from LUTptralltest import squarelut8
+from LUTptralltest import cleanupf
 import time
 
 os.system('v4l2-ctl -d 0 -c focus_auto=0')
@@ -24,17 +24,17 @@ output = np.array([0,640,0,480,0,480])
 l = 1
 i = 1
 start = time.clock()
-while (True) & ( l < 200):
+while (True) & ( l < 60):
 	ret,frame = cap.read()
 	#frame1 = frame.copy()
 	output = squarelut8(output,480,640,10,frame[output[4]:output[5],:,:])
 	if output[0] <= output[1]:
-		cv2.rectangle(frame,(output[0],output[2]),(output[1],output[3]),(255,0,0),2)
+		#cv2.rectangle(frame,(output[0],output[2]),(output[1],output[3]),(255,0,0),2)
 		print np.asarray(output)[0:4]
 	else:
 		print "Ball Not detected"
 	l += 1
-	cv2.imshow('frame',frame)
+	#cv2.imshow('frame',frame)
 	#if cv2.waitKey(1) & 0xFF == ord('c'):
 	#	stringval = 'img' + str(i) +'.bmp'
 	#	cv2.imwrite(stringval,frame1)

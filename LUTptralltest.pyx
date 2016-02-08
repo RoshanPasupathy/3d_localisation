@@ -200,7 +200,7 @@ def squarelut8(int[::1] output,int x, int y,unsigned char v,unsigned char[:,:,::
     for x0 in range(deltax):
         posptr[0] = (x0 *y)
         i0 = i
-        for y0 in range(yminscan,ymaxscan):
+        for y0 in range(yminscan,ymaxscan,3 - (2*xpos)):
             posptr[1] = 3 * (posptr[0] + y0)
             inc = tablelut_ptr1[256*256*img_ptr[posptr[1]] + 256*img_ptr[posptr[1] +1] + img_ptr[posptr[1] + 2]]
             i += inc
