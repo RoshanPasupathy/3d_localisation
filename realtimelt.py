@@ -63,7 +63,7 @@ vs = WebcamVideoStream(src=0).start()
 l = 1
 i = 1
 start = time.clock()
-while (True) & ( l < 60):
+while (True) & ( l < 200):
 	#ret,frame = cap.read()
 	frame = vs.read()
 	#frame1 = frame.copy()
@@ -87,6 +87,6 @@ print 'time taken =',end - start,'seconds'
 print 'frame rate =',l/(end-start)
 
 cleanupf()
-cap.release()
+#cap.release()
 cv2.destroyAllWindows()
 vs.stop()
