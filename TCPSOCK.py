@@ -120,13 +120,14 @@ class Interruptor:
                     # Input from TCP socket
                     socket, cb = self._tcp_client_sockets[fileno]
                     content = socket.recv(142)
-                    if not content or not content.strip():
-                        # No content means quitting
-                        self.close_tcp_client(fileno)
-                    else:
+                    if content and content.strip():
                         sock, cb = self._tcp_client_sockets[fileno]
                         cb(self._tcp_client_sockets[fileno][0], \
                                 content.strip())
+                    else:
+                        # No content means quitting
+                        self.close_tcp_client(fileno)
+
                 elif fileno in self._tcp_server_sockets:
                     # New client connection to socket server
                     serversocket, cb = self._tcp_server_sockets[fileno]
