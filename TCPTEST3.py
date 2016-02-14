@@ -1,6 +1,6 @@
 import numpy as np
 #import TCPSOCK as tcps
-from TCPSOCK import Interruptor
+from TCPSOCK1 import Interruptor
 from threading import Thread
 
 # Initialise class #
@@ -43,28 +43,20 @@ def cleanup(classinit):
 u1 = np.zeros((3),dtype=np.int32)
 u2 = np.zeros((3),dtype=np.int32)
 
-running1 = True
-running2 = True
 fr1 = 0
 fr2 = 0
 loop_count = 0
 
 ########### callbacks ######################################## 
 def socket_cb(socket,val):
-	global u2,running1,fr1
-	if val[0] == 's':
-		u2 = np.loads(val[1:])
-		fr1 += 1
-	elif val[0] == 'e':
-		running1 = False
+	global u2,fr2
+	u2 = np.loads(val[1:])
+	fr2 += 1
 		
 def socket_cb2(socket,val):
-	global u1,running2,fr2
-	if val[0] == 's':
-		u1 = np.loads(val[1:])
-		fr2 += 1
-	elif val[0] == 'e':
-		running2 = False
+	global u1,fr1
+	u1 = np.loads(val[1:])
+	fr1 += 1
 			
 ##########set callbacks #####################################
 tcps.add_tcp_callback(8000,socket_cb,threaded_callback = False)
@@ -74,21 +66,23 @@ wait_for_interrupts(tcps2,threaded=True)
 
 ##########   main loop #####################################
 
-while running1 or running2:
+while tcps.running or tcps2.running:
 	p1 = u1.copy()
 	p2 = u2.copy()
-	m1 = np.cross(p1,p2)
+	#m1 = np.cross(p1,p2)
 	m2 = np.cross(p1,p2)
-	m3 = np.dot(m1,m2)
+	#m3 = np.dot(m1,m2)
 	p3 =  p1 + p2
 	#print m3
 	#print fr2 ': received', p2
 	print fr1, fr2
-	if (fr1 > 0) * (fr2 > 0) * running1 * running2:
+	if (fr1 > 0) * (fr2 > 0)* (tcps.running) * (tcps2.running) :
 		loop_count += 1
 
 print fr1
 print fr2
 print 'loop count',loop_count
+print tcps.calarray
+print tcps2.calarray
 cleanup(tcps)
 cleanup(tcps2)

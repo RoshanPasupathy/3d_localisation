@@ -28,6 +28,7 @@ import select
 import os.path
 import time
 import atexit
+import numpy as np
 
 from logging import debug, info, warn, error
 from threading import Thread
@@ -116,19 +117,7 @@ class Interruptor:
             events = self._epoll.poll(epoll_timeout)
             for fileno, event in events:
                 debug("- epoll event on fd %s: %s" % (fileno, event))
-                if event & select.EPOLLIN:
-                    # Input from TCP socket
-                    socket, cb = self._tcp_client_sockets[fileno]
-                    content = socket.recv(142)
-                    if content and content.strip():
-                        sock, cb = self._tcp_client_sockets[fileno]
-                        cb(self._tcp_client_sockets[fileno][0], \
-                                content.strip())
-                    else:
-                        # No content means quitting
-                        self.close_tcp_client(fileno)
-
-                elif fileno in self._tcp_server_sockets:
+                if fileno in self._tcp_server_sockets:
                     # New client connection to socket server
                     serversocket, cb = self._tcp_server_sockets[fileno]
                     connection, address = serversocket.accept()
@@ -136,6 +125,18 @@ class Interruptor:
                     f = connection.fileno()
                     self._epoll.register(f, select.EPOLLIN)
                     self._tcp_client_sockets[f] = (connection, cb)
+
+                elif event & select.EPOLLIN:
+                    # Input from TCP socket
+                    socket, cb = self._tcp_client_sockets[fileno]
+                    content = socket.recv(142)
+                    if content:          #and content.strip():
+                        sock, cb = self._tcp_client_sockets[fileno]
+                        cb(self._tcp_client_sockets[fileno][0], \
+                                content.strip())
+                    else:
+                        # No content means quitting
+                        self.close_tcp_client(fileno)
 
                 elif event & select.EPOLLHUP:
                     # TCP Socket Hangup
