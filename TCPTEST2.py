@@ -5,6 +5,7 @@ from threading import Thread
 
 # Initialise class #
 tcps = Interruptor()
+tcps2 = Interruptor()
 
 #functions needed ##############################################
 def wait_for_interrupts(classinit,threaded=False, epoll_timeout=1):
@@ -66,9 +67,10 @@ def socket_cb2(socket,val):
 		running2 = False
 			
 ##########set callbacks #####################################
-tcps.add_tcp_callback(8000,socket_cb,threaded_callback =True)
-tcps.add_tcp_callback(8080,socket_cb2,threaded_callback =True)
+tcps.add_tcp_callback(8000,socket_cb,threaded_callback = False)
+tcps2.add_tcp_callback(8080,socket_cb2,threaded_callback = False)
 wait_for_interrupts(tcps,threaded=True)
+wait_for_interrupts(tcps2,threaded=True)
 
 ##########   main loop #####################################
 
@@ -89,3 +91,4 @@ print fr1
 print fr2
 print 'loop count',loop_count
 cleanup(tcps)
+cleanup(tcps2)
