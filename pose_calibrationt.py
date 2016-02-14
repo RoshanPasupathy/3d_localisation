@@ -12,8 +12,8 @@ import time
 
 os.system('v4l2-ctl -d 0 -c focus_auto=0')
 os.system('v4l2-ctl -d 0 -c focus_absolute=0')
-os.system('v4l2-ctl -d 0 -c exposure_auto=1')
-os.system('v4l2-ctl -d 0 -c exposure_absolute=250')
+os.system('v4l2-ctl -d 0 -c exposure_auto=50')
+os.system('v4l2-ctl -d 0 -c exposure_absolute=150')
 os.system('v4l2-ctl -d 0 -c contrast=100')
 os.system('v4l2-ctl -d 0 -c brightness=128')
 os.system('v4l2-ctl -d 0 -c white_balance_temperature_auto=1')
@@ -33,7 +33,7 @@ def draw2(img,corners):
 mtx = np.array([[614.77666,0,316.92032],[0,615.67564,245.62514],[0,0,1]])
 dist = np.array([0.10428,-0.18237,-0.00004,0.00167,0.00000])
 		
-criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 80, 0.001)
+criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 500, 0.001)
 objp = np.zeros((6*9,3), np.float32)
 objp[:,:2] = np.mgrid[0:9,0:6].T.reshape(-1,2)
 objp = 26.0 * objp
