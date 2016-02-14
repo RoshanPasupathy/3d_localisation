@@ -116,16 +116,7 @@ class Interruptor:
             events = self._epoll.poll(epoll_timeout)
             for fileno, event in events:
                 debug("- epoll event on fd %s: %s" % (fileno, event))
-                if fileno in self._tcp_server_sockets:
-                    # New client connection to socket server
-                    serversocket, cb = self._tcp_server_sockets[fileno]
-                    connection, address = serversocket.accept()
-                    connection.setblocking(0)
-                    f = connection.fileno()
-                    self._epoll.register(f, select.EPOLLIN)
-                    self._tcp_client_sockets[f] = (connection, cb)
-
-                elif event & select.EPOLLIN:
+                if event & select.EPOLLIN:
                     # Input from TCP socket
                     socket, cb = self._tcp_client_sockets[fileno]
                     content = socket.recv(142)
@@ -136,6 +127,14 @@ class Interruptor:
                         sock, cb = self._tcp_client_sockets[fileno]
                         cb(self._tcp_client_sockets[fileno][0], \
                                 content.strip())
+                elif fileno in self._tcp_server_sockets:
+                    # New client connection to socket server
+                    serversocket, cb = self._tcp_server_sockets[fileno]
+                    connection, address = serversocket.accept()
+                    connection.setblocking(0)
+                    f = connection.fileno()
+                    self._epoll.register(f, select.EPOLLIN)
+                    self._tcp_client_sockets[f] = (connection, cb)
 
                 elif event & select.EPOLLHUP:
                     # TCP Socket Hangup
