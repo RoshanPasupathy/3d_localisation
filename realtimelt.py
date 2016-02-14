@@ -63,10 +63,9 @@ vs = WebcamVideoStream(src=0).start()
 l = 1
 i = 1
 start = time.clock()
-while (True) & ( l < 200):
+while (True) & ( l < 400):
 	#ret,frame = cap.read()
 	frame = vs.read()
-	#frame1 = frame.copy()
 	output = squarelut8(output,480,640,10,frame[output[4]:output[5],:,:])
 	if output[0] <= output[1]:
 		#cv2.rectangle(frame,(output[0],output[2]),(output[1],output[3]),(255,0,0),2)
