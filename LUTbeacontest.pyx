@@ -108,14 +108,14 @@ tablegen(40,80,-1.0,100.0,-0.651162,242.7906,40.0) #consider changing thresh to 
 
 #rect contains coordinates of square. Qinv is inverse of np.dot(mtx,R)
 def final_return(rect,Qinv):
-    ##cdef:
-    ##   double[::1] outval = np.array([0,0,0],dtype = np.float64) #initialise ouput array
-
+    cdef:
+        double[:,::1] u
+    ##double[::1] outval = np.array([0,0,0],dtype = np.float64) #initialise ouput array
     xcord = int((rect[2] + rect[3])/2)) #find x pixel
     ycord = int((rect[0] + rect[1])/2)) #find y pixel
 
     #undistort pixels
-    res = undistortptr[0,(xcord*640) + ycord]
+    res = undistortptr[0,(xcord*640) + ycord,:]
     ppos = np.array([res[0],res[1],[1]])
 
     #calculate u vector 3 x 1
