@@ -89,7 +89,7 @@ cdef unsigned char[:,:,::1] tablegen2(long hmin,long hmax,long smin, long smax, 
  
 
 srcarray =  1.0 * np.mgrid[0:640,0:480].T.reshape(1,480*640,2)
-undistortptr = cv2.undistortPoints(srcarray,mtx,dst,R = None,P= mtx)
+cdef double[:,:,::1] undistortptr = cv2.undistortPoints(srcarray,mtx,dst,R = None,P= mtx)
 #cdef double* undistortptr= &result[0,0]
 
 #cdef unsigned char[:,:,::1] tablelut = tablegen2(87,90,50,255,190,255)
@@ -120,7 +120,7 @@ def final_return(rect,Qinv):
 
     #calculate u vector 3 x 1
     u = np.dot(Qinv,ppos)
-    
+
     return u
 
 
