@@ -129,7 +129,7 @@ class Interruptor:
                 elif event & select.EPOLLIN:
                     # Input from TCP socket
                     socket, cb = self._tcp_client_sockets[fileno]
-                    content = socket.recv(142)
+                    content = socket.recv(156)
                     if content:          #and content.strip():
                         sock, cb = self._tcp_client_sockets[fileno]
                         cb(self._tcp_client_sockets[fileno][0], \
