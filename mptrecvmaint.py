@@ -46,7 +46,7 @@ class SocketReader:
         # be stopped
         self.listening = True
         #trash collector for truncated data
-        self.trash = ''
+        #self.trash = ''
 
         #self.port = port
         #pipe to send caldata
@@ -85,19 +85,21 @@ class SocketReader:
 
             # otherwise, read the next frame from the stream
             content = self.client.recv(self.dat_size)
-            if len(content) == self.dat_size:
-                if (content[0] == 'u') and (content[-1] == 'l'): #valid data
-                    self.arr = np.loads(content[1:self.dat_size-1]).ravel()
-                    self.flag = 2
-                elif content[0] == 'd': #invalid data
-                    self.flag = 1
-                elif content[0] == 'c': #calibration
-                    self.pipe.send(np.loads(content[1:self.dat_size-1]).ravel())
-                elif content[0] == 'e': #loop stop
-                    self.flag = 0
-                    self.stopped = True
-            else:
-                self.trash = self.client.recv(self.dat_size - len(content)) #send truncated data to trash
+            while len(content) < self.dat_size:
+                self.content += self.client.recv(self.dat_size - len(content)) #add truncated data
+                #self.trash = self.client.recv(self.dat_size - len(content))
+            #if len(content) == self.dat_size:
+            if (content[0] == 'u') and (content[-1] == 'l'): #valid data
+                self.arr = np.loads(content[1:self.dat_size-1])
+                self.flag = 2
+            elif content[0] == 'd': #invalid data
+                self.flag = 1
+            elif content[0] == 'c': #calibration
+                self.pipe.send(np.loads(content[1:self.dat_size-1]))
+            elif content[0] == 'e': #loop stop
+                self.flag = 0
+                self.stopped = True
+
 
     def read(self):
         return self.flag,self.arr
