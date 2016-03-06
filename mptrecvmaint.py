@@ -97,7 +97,7 @@ class SocketReader:
                     self.flag = 0
                     self.stopped = True
             else:
-                self.trash = sockobj.recv(self.dat_size - len(content)) #send truncated data to trash
+                self.trash = self.client.recv(self.dat_size - len(content)) #send truncated data to trash
 
     def read(self):
         return self.flag,self.arr
