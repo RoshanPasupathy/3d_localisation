@@ -24,36 +24,67 @@ rvecs = np.array([[-0.33025405],[-0.25113913],[-1.52710343]])
 tvecs = np.array([[-33.85189337],[189.50452354],[ 609.96533569]])
 ################## SOCKET READER CLASS ##################
 class SocketReader:
-    def __init__(self, sockobj,dat_size,pipecal):
-        # initialize the video camera stream and read the first frame
-        # from the stream
+    def __init__(self, port,dat_size,pipecal):
+        #create array object which is updated
         self.arr = np.array([0,0,0],dtype=np.float64)
+        #create flag object which is updated
         self.flag = 1
+
+        #socket objects
+        self.sockets = []
+        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.server.bind((_TCP_SOCKET_HOST, port))
+        self.server.listen(1)
+        self.server.setblocking(0)
+        self.sockets.append(self.server)
 
         # initialize the variable used to indicate if the thread should
         # be stopped
         self.stopped = False
+        # initialize the variable used to indicate if the listening thread should
+        # be stopped
+        self.listening = True
+        #trash collector for truncated data
         self.trash = ''
-        self.sock =sockobj
+
+        #self.port = port
+        #pipe to send caldata
         self.pipe = pipecal
         self.dat_size = dat_size
 
+        #register server on epoll
+        self._epoll = select.epoll()
+        self._epoll.register(self.server.fileno(), select.EPOLLIN)
+
     def start(self):
-        # start the thread to read frames from the video stream
-        t = Thread(target=self.update, args=())
+        t = Thread(target=self.threadedloop,args=())
         t.daemon = True
         t.start()
         return self
 
-    def update(self):
-        # keep looping infinitely until the thread is stopped
+    def threadedloop(self):
+        """this function runs in a parallel thread"""
+        #loop to create client socket
+        while self.listening:
+            for fileno, event in self._epoll.poll(1):
+                if fileno == self.server.fileno():
+                    #create client socket
+                    self.client, self.caddr = self.server.accept()
+                    #Blocking client
+                    self.client.setblocking(1)
+                    #add client to socket list
+                    self.sockets.append(self.client)
+                    #unregister server from epoll list
+                    self._epoll.unregister(self.server.fileno())
+                    self.listening = False #exit loop once client socket created
+        #loop to update flag and arrays
         while True:
-            # if the thread indicator variable is set, stop the thread
             if self.stopped:
                 return
 
             # otherwise, read the next frame from the stream
-            content = self.sock.recv(self.dat_size)
+            content = self.client.recv(self.dat_size)
             if len(content) == self.dat_size:
                 if (content[0] == 'u') and (content[-1] == 'l'): #valid data
                     self.arr = np.loads(content[1:self.dat_size-1]).ravel()
@@ -67,91 +98,16 @@ class SocketReader:
                     self.stopped = True
             else:
                 self.trash = sockobj.recv(self.dat_size - len(content)) #send truncated data to trash
+
     def read(self):
         return self.flag,self.arr
-
-    # def readflag(self):
-    #     return self.flag
 
     def stop(self):
         # indicate that the thread should be stopped
         self.stopped = True
+        for i in self.sockets:
+            i.close()
 
-
-
-################## FUNCTION DEFINITIONS ##################
-
-def socketcomm(port,pipec, flags,uarr,dat_size = 155):
-    """Callback function to deal with incoming tcp communication.
-    pipec,pipeu and pipesoc are pipe objects
-    pipec: describes position of camera
-    pipeu: describes orientation of camera.
-               sends (True, data) for good data
-               sends (False,.......) for bad data or loop not running
-    pipesoc: fill socket objects and send to __main__
-    """
-    #Flags
-    sockets = []
-    flag = 1
-    arr = np.array([0,0,0],dtype=np.float64)
-    #initialise socket object
-    serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    serversocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    serversocket.bind((_TCP_SOCKET_HOST, port))
-    serversocket.listen(1)
-    serversocket.setblocking(0)
-    #add server socket to list of sockets
-    sockets.append(serversocket)
-    #create epoll object
-    _epoll = select.epoll()
-    #register interest in read events on the server socket
-    _epoll.register(serversocket.fileno(), select.EPOLLIN)
-    #content = ''
-    while (flag != 0):
-        events = _epoll.poll(1)
-        for fileno, event in events:
-            if fileno == serversocket.fileno():
-                #initialise client socket object
-                clientsocket,clientaddr = serversocket.accept()
-                clientsocket.setblocking(0)
-                #register client socket on epoll
-                _epoll.register(clientsocket.fileno(),select.EPOLLIN)
-                sockets.append(clientsocket)
-                sockr = SocketReader(clientsocket,dat_size=dat_size,pipecal=pipec).start()
-            elif event & select.EPOLLIN:
-                #read event  on client socket
-                #while (len(content) < dat_size):
-                     #content += clientsocket.recv(dat_size-len(content))
-                flag,arr =  sockr.read()
-                with uarr.get_lock():
-                    uarr.get_obj()[:3] = arr
-                flags.value = flag
-
-                # if (content[0] == 'u') and (content[-1] == 'l'):
-                #     #pipeu.send((True,True,np.loads(content[1:157])))
-                #                 with uarr.get_lock():
-                #                     uarr.get_obj()[:3] = np.loads(content[1:157]).ravel()
-                #     flags.value = 2
-                # elif content[0] == 'd':
-                #     #pipeu.send((False,True))
-                #     flags.value = 1
-                # elif content[0] == 'c':
-                #     pipec.send(np.loads(content[1:]))
-                # elif content[0] == 'e':
-                #     #pipeu.send((False,False))
-                #     flags.value = 0
-                #     waiting_for_data = False
-                #     for i in sockets:
-                #         _epoll.unregister(i.fileno())
-                # content = ''
-
-            elif event & select.EPOLLHUP:
-                for i in sockets:
-                    _epoll.unregister(i.fileno())
-                    i.close()
-    for i in sockets:
-        _epoll.unregister(i.fileno())
-        i.close()
 
 ################## WEBCAM CLASS ##################
 # uncomment for testing
@@ -191,22 +147,18 @@ class WebcamVideoStream:
         # indicate that the thread should be stopped
         self.stopped = True
 
-################## SET PROCESSES ##################
+################## SET THREAD PARAMETERS ##################
 runflag = True
 #f is for function and l is for loop
 #pipes for carr
 pipecl1, pipecf1 = Pipe(False)
-#pipes for uarr
-#pipeuf1, pipeul1 = Pipe()
-#pipes for socket objects
-#pipesockf1, pipesockl1 = Pipe()
 #set process
 arr1 = np.array([0,0,0],dtype=np.float64)
-uarray1 = Array('d',3)
+#uarray1 = Array('d',3)
 #uarray1 = sharedctypes.synchronized(arr1)
 
-uflag1 = Value('B',1)
-proc1 = Process(target=socketcomm,args=(port1,pipecf1,uflag1,uarray1))
+#uflag1 = Value('B',1)
+#Process(target=socketcomm,args=(port1,pipecf1,uflag1,uarray1))
 
 #f is for function and l is for loop
 #pipes for carr
@@ -219,14 +171,16 @@ pipecl2, pipecf2 = Pipe(False)
 
 arr2 = np.array([0,0,0],dtype=np.float64)
 #uarray2 = sharedctypes.synchronized(arr2)
-uarray2 = Array('d',3)
-uflag2 = Value('B',1)
-proc2 = Process(target=socketcomm,args=(port2,pipecf2,uflag2,uarray2))
+#uarray2 = Array('d',3)
+#uflag2 = Value('B',1)
+#proc2 = Process(target=socketcomm,args=(port2,pipecf2,uflag2,uarray2))
 
 ################## START PROCESSES ##################
 
-proc1.start()
-proc2.start()
+#proc1.start()
+proc1 = SocketReader(port=8000,dat_size=155,pipecal=pipecf1).start()
+#proc2.start()
+proc2 = SocketReader(port=8080,dat_size=155,pipecal=pipecf2).start()
 # uncomment nextline for testing
 vs = WebcamVideoStream(src=0).start()
 
@@ -235,46 +189,46 @@ vs = WebcamVideoStream(src=0).start()
 print "Udating c..."
 c1 = pipecl1.recv() #Blocking
 c2 = pipecl2.recv() #Blocking
-update_c(c1.ravel(),c2.ravel()) #########
+update_c(c1,c2) #########
 
 print "Running main loop..."
 while runflag:
-    #print uflag1.value
-    #print uflag2.value
-    dat1 = uflag1.value
-    dat2 = uflag2.value
-    #frame = vs.read() #for testing
+    flag1,arr1 = proc1.read()
+    flag2,arr2 = proc2.read()
+    # dat1 = uflag1.value
+    # dat2 = uflag2.value
+    frame = vs.read() #for testing
     #datrecv1 = pipeul1.recv() #Blocking
     #datrecv2 = pipeul2.recv() #Blocking
     #if datrecv1[0] and datrecv2[0]:
-    if (dat1 == 2) and (dat2 ==2):
+    if (flag1 == 2) and (flag2 ==2):
         #pos3d =  calc3d(datrecv2[2].ravel(),datrecv1[2].ravel()) ########
-        with uarray1.get_lock():
-            arr1 = np.frombuffer(uarray1.get_obj())
-        with uarray2.get_lock():
-            arr2 = np.frombuffer(uarray2.get_obj())
+        # with uarray1.get_lock():
+        #     arr1 = np.frombuffer(uarray1.get_obj())
+        # with uarray2.get_lock():
+        #     arr2 = np.frombuffer(uarray2.get_obj())
         pos3d =  calc3d(arr1,arr2)
-        print np.asarray(pos3d)
-        #imgpts, jac = cv2.projectPoints(np.float32([np.asarray(pos3d)]).reshape(-1,3), rvecs, tvecs, mtx, dist)
-        #cv2.rectangle(frame,(int(imgpts[0,0,0]) - 2,int(imgpts[0,0,1]) - 2),(int(imgpts[0,0,0]) + 2 ,int(imgpts[0,0,1]) + 2),(255,0,0),1)
+        #print np.asarray(pos3d)
+        imgpts, jac = cv2.projectPoints(np.float32([np.asarray(pos3d)]).reshape(-1,3), rvecs, tvecs, mtx, dist)
+        cv2.rectangle(frame,(int(imgpts[0,0,0]) - 2,int(imgpts[0,0,1]) - 2),(int(imgpts[0,0,0]) + 2 ,int(imgpts[0,0,1]) + 2),(255,0,0),1)
     #elif not datrecv1[1] or not datrecv2[1]:
-    elif (dat1 == 0) or (dat2 ==0):
+    elif (flag1 == 0) or (flag2 ==0):
         runflag = False
-    #cv2.imshow('frame',frame)
-        #if cv2.waitKey(1) & 0xFF == ord('q'):
-        #   break
+    cv2.imshow('frame',frame)
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
 
 print "Waiting for both processes to stop..."
 #while pipeul1.poll(0.5) or pipeul2.poll(0.5):
-while (uflag1.value != 0) or (uflag2.value != 0):
+while (proc1.read()[0] != 0) or (proc2.read()[0] != 0):
     continue
 
+print "No problems experienced"
+
 print "Cleaning up......"
-#sockets1 = pipesockl1.recv()
-#sockets2 = pipesockl2.recv()
-#for socs in sockets1 + sockets2:
-#   socs.close()
-proc1.join()
-proc2.join()
+# proc1.join()
+# proc2.join()
+proc1.stop()
+proc2.stop()
 vs.stop() #uncomment for testing
 cv2.destroyAllWindows()
