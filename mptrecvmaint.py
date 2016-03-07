@@ -5,6 +5,7 @@ import os.path
 import numpy as np
 import cv2
 import os
+import sys,traceback
 # import time
 from multiprocessing import Pipe,Process,Array,Value,sharedctypes
 from threading import Thread
@@ -86,7 +87,7 @@ class SocketReader:
             # otherwise, read the next frame from the stream
             content = self.client.recv(self.dat_size)
             while len(content) < self.dat_size:
-                self.content += self.client.recv(self.dat_size - len(content)) #add truncated data
+                content += self.client.recv(self.dat_size - len(content)) #add truncated data
                 #self.trash = self.client.recv(self.dat_size - len(content))
             #if len(content) == self.dat_size:
             if (content[0] == 'u') and (content[-1] == 'l'): #valid data
@@ -178,59 +179,65 @@ arr2 = np.array([0,0,0],dtype=np.float64)
 #proc2 = Process(target=socketcomm,args=(port2,pipecf2,uflag2,uarray2))
 
 ################## START PROCESSES ##################
+try:
+	#proc1.start()
+	proc1 = SocketReader(port=8000,dat_size=155,pipecal=pipecf1).start()
+	#proc2.start()
+	proc2 = SocketReader(port=8080,dat_size=155,pipecal=pipecf2).start()
+	# uncomment nextline for testing
+	vs = WebcamVideoStream(src=0).start()
+	
+	################## BEGIN MAIN LOOP ##################
+	
+	print "Udating c..."
+	c1 = pipecl1.recv() #Blocking
+	c2 = pipecl2.recv() #Blocking
+	update_c(c1,c2) #########
+	
+	print "Running main loop..."
+	while runflag:
+	    flag1,arr1 = proc1.read()
+	    flag2,arr2 = proc2.read()
+	    # dat1 = uflag1.value
+	    # dat2 = uflag2.value
+	    #frame = vs.read() #for testing
+	    #datrecv1 = pipeul1.recv() #Blocking
+	    #datrecv2 = pipeul2.recv() #Blocking
+	    #if datrecv1[0] and datrecv2[0]:
+	    if (flag1 == 2) and (flag2 ==2):
+	        #pos3d =  calc3d(datrecv2[2].ravel(),datrecv1[2].ravel()) ########
+	        # with uarray1.get_lock():
+	        #     arr1 = np.frombuffer(uarray1.get_obj())
+	        # with uarray2.get_lock():
+	        #     arr2 = np.frombuffer(uarray2.get_obj())
+	        pos3d =  calc3d(arr1,arr2)
+	        print np.asarray(pos3d)
+	        #imgpts, jac = cv2.projectPoints(np.float32([np.asarray(pos3d)]).reshape(-1,3), rvecs, tvecs, mtx, dist)
+	        #cv2.rectangle(frame,(int(imgpts[0,0,0]) - 2,int(imgpts[0,0,1]) - 2),(int(imgpts[0,0,0]) + 2 ,int(imgpts[0,0,1]) + 2),(255,0,0),1)
+	    #elif not datrecv1[1] or not datrecv2[1]:
+	    elif (flag1 == 0) or (flag2 ==0):
+	        runflag = False
+	    #cv2.imshow('frame',frame)
+	    #if cv2.waitKey(1) & 0xFF == ord('q'):
+	    #    break
+	
+	print "Waiting for both processes to stop..."
+	#while pipeul1.poll(0.5) or pipeul2.poll(0.5):
+	while (proc1.read()[0] != 0) or (proc2.read()[0] != 0):
+	    continue
+	
+	print "Script executed without issue"
 
-#proc1.start()
-proc1 = SocketReader(port=8000,dat_size=155,pipecal=pipecf1).start()
-#proc2.start()
-proc2 = SocketReader(port=8080,dat_size=155,pipecal=pipecf2).start()
-# uncomment nextline for testing
-vs = WebcamVideoStream(src=0).start()
+except:
+	typ,value,tb = sys.exc_info()
+	traceback.print_exception(typ,value,tb)
 
-################## BEGIN MAIN LOOP ##################
-
-print "Udating c..."
-c1 = pipecl1.recv() #Blocking
-c2 = pipecl2.recv() #Blocking
-update_c(c1,c2) #########
-
-print "Running main loop..."
-while runflag:
-    flag1,arr1 = proc1.read()
-    flag2,arr2 = proc2.read()
-    # dat1 = uflag1.value
-    # dat2 = uflag2.value
-    frame = vs.read() #for testing
-    #datrecv1 = pipeul1.recv() #Blocking
-    #datrecv2 = pipeul2.recv() #Blocking
-    #if datrecv1[0] and datrecv2[0]:
-    if (flag1 == 2) and (flag2 ==2):
-        #pos3d =  calc3d(datrecv2[2].ravel(),datrecv1[2].ravel()) ########
-        # with uarray1.get_lock():
-        #     arr1 = np.frombuffer(uarray1.get_obj())
-        # with uarray2.get_lock():
-        #     arr2 = np.frombuffer(uarray2.get_obj())
-        pos3d =  calc3d(arr1,arr2)
-        #print np.asarray(pos3d)
-        imgpts, jac = cv2.projectPoints(np.float32([np.asarray(pos3d)]).reshape(-1,3), rvecs, tvecs, mtx, dist)
-        cv2.rectangle(frame,(int(imgpts[0,0,0]) - 2,int(imgpts[0,0,1]) - 2),(int(imgpts[0,0,0]) + 2 ,int(imgpts[0,0,1]) + 2),(255,0,0),1)
-    #elif not datrecv1[1] or not datrecv2[1]:
-    elif (flag1 == 0) or (flag2 ==0):
-        runflag = False
-    cv2.imshow('frame',frame)
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-
-print "Waiting for both processes to stop..."
-#while pipeul1.poll(0.5) or pipeul2.poll(0.5):
-while (proc1.read()[0] != 0) or (proc2.read()[0] != 0):
-    continue
-
-print "No problems experienced"
-
-print "Cleaning up......"
-# proc1.join()
-# proc2.join()
-proc1.stop()
-proc2.stop()
-vs.stop() #uncomment for testing
-cv2.destroyAllWindows()
+finally:
+	print "Cleaning up......"
+	# proc1.join()
+	# proc2.join()
+	proc1.stop()
+	proc2.stop()
+	vs.stop() #uncomment for testing
+	cv2.destroyAllWindows()
+	
