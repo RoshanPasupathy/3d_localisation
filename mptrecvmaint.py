@@ -103,7 +103,7 @@ class SocketReader:
 
 
     def read(self):
-        return self.flag,self.arr
+        return (self.flag,self.arr)
 
     def stop(self):
         # indicate that the thread should be stopped
@@ -156,7 +156,7 @@ runflag = True
 #pipes for carr
 pipecl1, pipecf1 = Pipe(False)
 #set process
-arr1 = np.array([0,0,0],dtype=np.float64)
+#arr1 = np.array([0,0,0],dtype=np.float64)
 #uarray1 = Array('d',3)
 #uarray1 = sharedctypes.synchronized(arr1)
 
@@ -172,7 +172,7 @@ pipecl2, pipecf2 = Pipe(False)
 #pipesockf2, pipesockl2 = Pipe()
 #set process
 
-arr2 = np.array([0,0,0],dtype=np.float64)
+#arr2 = np.array([0,0,0],dtype=np.float64)
 #uarray2 = sharedctypes.synchronized(arr2)
 #uarray2 = Array('d',3)
 #uflag2 = Value('B',1)
@@ -196,26 +196,26 @@ try:
 	
 	print "Running main loop..."
 	while runflag:
-	    flag1,arr1 = proc1.read()
-	    flag2,arr2 = proc2.read()
+	    Dat1 = proc1.read()
+	    Dat2 = proc2.read()
 	    # dat1 = uflag1.value
 	    # dat2 = uflag2.value
 	    #frame = vs.read() #for testing
 	    #datrecv1 = pipeul1.recv() #Blocking
 	    #datrecv2 = pipeul2.recv() #Blocking
 	    #if datrecv1[0] and datrecv2[0]:
-	    if (flag1 == 2) and (flag2 ==2):
+	    if (Dat1[0]== 2) and (Dat[0] ==2):
 	        #pos3d =  calc3d(datrecv2[2].ravel(),datrecv1[2].ravel()) ########
 	        # with uarray1.get_lock():
 	        #     arr1 = np.frombuffer(uarray1.get_obj())
 	        # with uarray2.get_lock():
 	        #     arr2 = np.frombuffer(uarray2.get_obj())
-	        pos3d =  calc3d(arr1,arr2)
+	        pos3d =  calc3d(Dat1[1],Dat2[1])
 	        print np.asarray(pos3d)
 	        #imgpts, jac = cv2.projectPoints(np.float32([np.asarray(pos3d)]).reshape(-1,3), rvecs, tvecs, mtx, dist)
 	        #cv2.rectangle(frame,(int(imgpts[0,0,0]) - 2,int(imgpts[0,0,1]) - 2),(int(imgpts[0,0,0]) + 2 ,int(imgpts[0,0,1]) + 2),(255,0,0),1)
 	    #elif not datrecv1[1] or not datrecv2[1]:
-	    elif (flag1 == 0) or (flag2 ==0):
+	    elif (Dat1[0] == 0) or (Dat2[0] ==0):
 	        runflag = False
 	    #cv2.imshow('frame',frame)
 	    #if cv2.waitKey(1) & 0xFF == ord('q'):
