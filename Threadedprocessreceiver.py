@@ -79,42 +79,41 @@ class SocketReader:
 
 ################## PROCESS DEFINTION ##################
 def socketcomm(port,pipec, flags,uarr,dat_size = 26):
-    """Callback function to deal with incoming tcp communication.
-    pipec,pipeu and pipesoc are pipe objects
-    pipec: describes position of camera
-    pipeu: describes orientation of camera.
-               sends (True, data) for good data
-               sends (False,.......) for bad data or loop not running
-    pipesoc: fill socket objects and send to __main__
-    """
-    #Flags
-    sockets = []
-    #initialise socket object
-    serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    serversocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    serversocket.bind((_TCP_SOCKET_HOST, port))
-    serversocket.listen(1)
-    serversocket.setblocking(1)
+	"""Callback function to deal with incoming tcp communication.
+	pipec,pipeu and pipesoc are pipe objects
+	pipec: describes position of camera
+	pipeu: describes orientation of camera.
+		sends (True, data) for good data
+		sends (False,.......) for bad data or loop not running
+	pipesoc: fill socket objects and send to __main__
+	"""
+	#Flags
+	sockets = []
+	arr = np.array([0,0,0],dtype=np.float64) 
+	#initialise socket object
+	serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	serversocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+	serversocket.bind((_TCP_SOCKET_HOST, port))
+	serversocket.listen(1)
     
-    #add server socket to list of sockets
-    sockets.append(serversocket)
+	#add server socket to list of sockets
+	sockets.append(serversocket)
     
     #client socket creator
-    clientsocket,clientaddr = serversocket.accept()
-    clientsocket.setblocking(1)
-    sockets.append(clientsocket)
+	clientsocket,clientaddr = serversocket.accept()
+	sockets.append(clientsocket)
     
-    #start thread which reads sockstream
-    sockr = SocketReader(clientsocket,dat_size=dat_size,pipecal=pipec).start()
-    
-    #run loop
-    while not datr[0]:
-    	datr =  sockr.read()
-    	with uarr.get_lock():
-    	    uarr.get_obj()[:3] = datr[1]
-      	flags.value = datr[0]
-    for i in sockets:
-      	i.close()
+	#start thread which reads sockstream
+	sockr = SocketReader(clientsocket,dat_size=dat_size,pipecal=pipec).start()
+	datr = (1,arr)
+	#run loop
+	while datr[0]:
+		datr =  sockr.read()
+		with uarr.get_lock():
+			uarr.get_obj()[:3] = datr[1]
+		flags.value = datr[0]
+	for i in sockets:
+		i.close()
 
 ################## WEBCAM CLASS ##################
 # uncomment for testing
@@ -177,8 +176,8 @@ uflag2 = Value('B',1)
 proc2 = Process(target=socketcomm,args=(port2,pipecf2,uflag2,uarray2))
 
 ################## START PROCESSES ##################
-runflag = True
 try:
+	runflag = True
 	proc1.start()
 	#proc1 = SocketReader(port=8000,dat_size=26,pipecal=pipecf1).start()
 	proc2.start()
@@ -195,28 +194,27 @@ try:
 	
 	print "Running main loop..."
 	while runflag:
-      	dat1 = uflag1.value
-      	dat2 = uflag2.value
-	    frame = vs.read() #for testing
-	    #if datrecv1[0] and datrecv2[0]:
-	    if (dat1 == 2) and (dat2 ==2):
-	        with uarray1.get_lock():
-	            arr1 = np.frombuffer(uarray1.get_obj())
-	        with uarray2.get_lock():
-	            arr2 = np.frombuffer(uarray2.get_obj())
-	        pos3d =  calc3d(arr1,arr2)
+		dat1 = uflag1.value
+		dat2 = uflag2.value
+		frame = vs.read() #for testing
+		if (dat1 == 2) and (dat2 ==2):
+			with uarray1.get_lock():
+				arr1 = np.frombuffer(uarray1.get_obj())
+			with uarray2.get_lock():
+				arr2 = np.frombuffer(uarray2.get_obj())
+			pos3d =  calc3d(arr1,arr2)
 	        #print np.asarray(pos3d)
-	        imgpts, jac = cv2.projectPoints(np.float32([np.asarray(pos3d)]).reshape(-1,3), rvecs, tvecs, mtx, dist)
-	        cv2.rectangle(frame,(int(imgpts[0,0,0]) - 2,int(imgpts[0,0,1]) - 2),(int(imgpts[0,0,0]) + 2 ,int(imgpts[0,0,1]) + 2),(255,0,0),1)
-	    elif not dat1 or not dat2:
-	        runflag = False
-	    cv2.imshow('frame',frame)
-	    if cv2.waitKey(1) & 0xFF == ord('q'):
-	        break
+			imgpts, jac = cv2.projectPoints(np.float32([np.asarray(pos3d)]).reshape(-1,3), rvecs, tvecs, mtx, dist)
+			cv2.rectangle(frame,(int(imgpts[0,0,0]) - 2,int(imgpts[0,0,1]) - 2),(int(imgpts[0,0,0]) + 2 ,int(imgpts[0,0,1]) + 2),(255,0,0),1)
+		elif not dat1 or not dat2:
+			runflag = False
+		cv2.imshow('frame',frame)
+		if cv2.waitKey(1) & 0xFF == ord('q'):
+			break
 	
 	print "Waiting for both processes to stop..."
 	while uflag1.value or uflag2.value:
-	    continue
+		continue
 	
 	print "Script executed without issue"
 
@@ -226,7 +224,8 @@ except:
 
 finally:
 	print "Cleaning up......"
-  	proc1.join()
+	proc1.join()
 	proc2.join()
 	vs.stop() #uncomment for testing
 	cv2.destroyAllWindows()
+	
