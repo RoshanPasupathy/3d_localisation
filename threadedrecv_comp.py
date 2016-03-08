@@ -28,7 +28,7 @@ class SocketReader:
     def __init__(self, port,dat_size,pipecal):
         #create array object which is updated
         self.arr = np.array([0,0,0],dtype=np.float64)
-        self.encstr = self.arr.dumps()[:126]
+        #self.encstr = self.arr.dumps()[:126]
         #create flag object which is updated
         self.flag = 1
 
@@ -53,7 +53,7 @@ class SocketReader:
         #self.port = port
         #pipe to send caldata
         self.pipe = pipecal
-        self.read_size = dat_size - 126
+        self.read_size = dat_size
 
         #register server on epoll
         self._epoll = select.epoll()
@@ -92,12 +92,12 @@ class SocketReader:
                 #self.trash = self.client.recv(self.dat_size - len(content))
             #if len(content) == self.dat_size:
             if (content[0] == 'u') and (content[-1] == 'l'): #valid data
-                self.arr = np.loads(''.join([self.encstr,content[1:self.read_size-1]))
+                self.arr = np.frombuffer(content[1:25],np.float64)#np.loads(''.join([self.encstr,content[1:self.read_size-1]))
                 self.flag = 2
             elif content[0] == 'd': #invalid data
                 self.flag = 1
             elif content[0] == 'c': #calibration
-                self.pipe.send(np.loads(''.join([self.encstr,content[1:self.read_size-1])))
+                self.pipe.send(np.frombuffer(content[1:25],np.float64))
             elif content[0] == 'e': #loop stop
                 self.flag = 0
                 self.stopped = True
@@ -182,9 +182,9 @@ pipecl2, pipecf2 = Pipe(False)
 ################## START PROCESSES ##################
 try:
 	#proc1.start()
-	proc1 = SocketReader(port=8000,dat_size=155,pipecal=pipecf1).start()
+	proc1 = SocketReader(port=8000,dat_size=26,pipecal=pipecf1).start()
 	#proc2.start()
-	proc2 = SocketReader(port=8080,dat_size=155,pipecal=pipecf2).start()
+	proc2 = SocketReader(port=8080,dat_size=26,pipecal=pipecf2).start()
 	# uncomment nextline for testing
 	vs = WebcamVideoStream(src=0).start()
 	
