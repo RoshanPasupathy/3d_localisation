@@ -112,9 +112,9 @@ def socketcomm(port,pipec, flags,uarr,dat_size = 26):
     	datr =  sockr.read()
     	with uarr.get_lock():
     	    uarr.get_obj()[:3] = datr[1]
-      flags.value = datr[0]
+      	flags.value = datr[0]
     for i in sockets:
-      i.close()
+      	i.close()
 
 ################## WEBCAM CLASS ##################
 # uncomment for testing
@@ -195,8 +195,8 @@ try:
 	
 	print "Running main loop..."
 	while runflag:
-      dat1 = uflag1.value
-      dat2 = uflag2.value
+      	dat1 = uflag1.value
+      	dat2 = uflag2.value
 	    frame = vs.read() #for testing
 	    #if datrecv1[0] and datrecv2[0]:
 	    if (dat1 == 2) and (dat2 ==2):
@@ -226,7 +226,7 @@ except:
 
 finally:
 	print "Cleaning up......"
-  proc1.join()
+  	proc1.join()
 	proc2.join()
 	vs.stop() #uncomment for testing
 	cv2.destroyAllWindows()
