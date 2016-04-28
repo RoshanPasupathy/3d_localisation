@@ -20,28 +20,36 @@ b = cap.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT)
 c = cap.get(cv2.cv.CV_CAP_PROP_FRAME_WIDTH)
 print b,c
 output = np.array([0,640,0,480,0,480])
-
 l = 1
 i = 1
+capture = 1 
 start = time.clock()
-while (True) & ( l < 60):
+while (True) & (capture < 5):
 	ret,frame = cap.read()
-	#frame1 = frame.copy()
+	frame1 = frame.copy()
 	output = squarelut8(output,480,640,10,frame[output[4]:output[5],:,:])
 	if output[0] <= output[1]:
-		#cv2.rectangle(frame,(output[0],output[2]),(output[1],output[3]),(255,0,0),2)
-		a = np.asarray(output,dtype=np.int32)[0:4]
-		print len(a.dumps())
+		cv2.rectangle(frame1,(output[0],output[2]),(output[1],output[3]),(255,0,0),2)
+		#a = np.asarray(output,dtype=np.int32)[0:4]
+		#print len(a.dumps())
 		
+
+
+		if cv2.waitKey(1) & 0xFF == ord('c'):
+			xcropmin = int(output[2] - (0.2*(output[2] - 0)))
+			xcropmax = int(output[3] + (0.2*(480 - output[3])))
+			ycropmin = int(output[0] - (0.2*(output[0] - 0)))
+			ycropmax = int(output[1] + (0.2*(640 - output[1])))
+			stringvaln = '/home/pi/ip/report/LED/notdetLED' + str(capture) + '.png'
+			stringvald = '/home/pi/ip/report/LED/detLED' + str(capture) + '.png' 
+			cv2.imwrite(stringvaln, frame[xcropmin:xcropmax,ycropmin:ycropmax,:])
+			cv2.imwrite(stringvald, frame1[xcropmin:xcropmax,ycropmin:ycropmax,:])
+			capture += 1
+			print ' number of images captured ', capture
 	else:
 		print "Ball Not detected"
 	l += 1
-	#cv2.imshow('frame',frame)
-	#if cv2.waitKey(1) & 0xFF == ord('c'):
-	#	stringval = 'img' + str(i) +'.bmp'
-	#	cv2.imwrite(stringval,frame1)
-	#	i += 1
-	#	print stringval + ' taken'
+	cv2.imshow('frame',frame1)
 	if cv2.waitKey(1) & 0xFF == ord('q'):
 		break
 end = time.clock()

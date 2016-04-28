@@ -58,7 +58,7 @@ def onmouse(event,x,y,flags,params):
 
     elif event == cv2.EVENT_MOUSEMOVE:
         if rectangle == True:
-            cv2.rectangle(sceneCopy,(ix,iy),(x,y),(255,0,0),1)
+            cv2.rectangle(sceneCopy,(ix,iy),(x,y),(0,255,0),1)
             #rect = (min(ix,x),min(iy,y),abs(ix-x),abs(iy-y))
             cv2.imshow('mouse input', sceneCopy)
             cv2.waitKey(1)
@@ -70,7 +70,8 @@ def onmouse(event,x,y,flags,params):
 	
         #cv2.rectangle(sceneImg,(ix,iy),(x,y),(0,255,0),1)
         # Draw rectangle in copy
-        cv2.rectangle(sceneCopy,(ix,iy),(x,y),(255,0,0),1)
+        cv2.rectangle(sceneCopy,(ix,iy),(x,y),(0,255,0),1)
+        #cv2.imwrite('/home/pi/ip/report/selectionLaser.jpg',sceneCopy)
         
         
         rect = (min(ix,x),min(iy,y),abs(ix-x),abs(iy-y))
@@ -79,6 +80,7 @@ def onmouse(event,x,y,flags,params):
         filteraxis = np.asarray(bgrhsvarraylc(diffimage,sceneImg,rect[1],rect[1]+rect[3],rect[0],rect[0]+rect[2],50.0))
         colourfreq += filteraxis
         #display copy with rectangle for 4 second
+        #cv2.imwrite('/home/pi/ip/report/diffLaser.jpg',diffimage)
         cv2.imshow('mouse input', diffimage)
         cv2.waitKey(4000)
         
@@ -110,6 +112,7 @@ while running:
     
     if keyPressed == ord('b'):
     	backimage = frame
+    	#cv2.imwrite('/home/pi/ip/report/referenceLaser.jpg',frame)
     	print "Background image taken"
     
     if keyPressed == ord('o'):
@@ -139,92 +142,118 @@ while running:
     if not scene:
         cv2.imshow('video', frame)
 
-    if picturestaken == 1:
+    if picturestaken == 3:
     	running = False
     
-fig = plt.figure(figsize = (8,6))
-ax = fig.add_subplot(111,projection = '3d')
-ax.grid(True)
-##sortedh = np.sort(hueaxis)
-##huevals = np.array(np.where(hueaxis >= sortedh[-3])).tolist() #list with double bracket
-##print 'hue values of ball =  %s. Please refer to plot' %(', '.join(str(it) for it in huevals[0]))
+#fig = plt.figure(figsize = (8,6))
+#ax = fig.add_subplot(111,projection = '3d')
+#ax.grid(True)
+###sortedh = np.sort(hueaxis)
+###huevals = np.array(np.where(hueaxis >= sortedh[-3])).tolist() #list with double bracket
+###print 'hue values of ball =  %s. Please refer to plot' %(', '.join(str(it) for it in huevals[0]))
 
-interestpos = np.nonzero(colourfreq)
-xo = interestpos[0]
-yo = interestpos[1]
-zo = interestpos[2]
-colval = colourfreq[interestpos]
-colors = cm.winter(colval/max(colval))
+#interestpos = np.nonzero(colourfreq)
+#xo = interestpos[0]
+#yo = interestpos[1]
+#zo = interestpos[2]
+#colval = colourfreq[interestpos]
+#colors = cm.winter(colval/max(colval))
 
-colmap = cm.ScalarMappable(cmap = cm.winter)
-colmap.set_array(colval/max(colval))
+#colmap = cm.ScalarMappable(cmap = cm.winter)
+#colmap.set_array(colval/max(colval))
+#scenepos = np.nonzero(colourscene)
+#xs = scenepos[0]
+#ys = scenepos[1]
+#zs = scenepos[2]
+#colvals = colourscene[scenepos]
+#colours2 = cm.spring(colvals/max(colvals))
 
-scenepos = np.nonzero(colourscene)
-xs = scenepos[0]
-ys = scenepos[1]
-zs = scenepos[2]
-colvals = colourscene[scenepos]
-colours2 = cm.spring(colvals/max(colvals))
+#colmap2 = cm.ScalarMappable(cmap = cm.spring)
+#colmap2.set_array(colvals)
 
-colmap2 = cm.ScalarMappable(cmap = cm.spring)
-colmap2.set_array(colvals/max(colvals))
+#ax.scatter(xo,yo,zo, c=colors, marker='o',label='Laser Dot ')
+#ax.scatter(xs,ys,zs, c=colours2, marker='s',label='Background')
 
-ax.scatter(xo,yo,zo, c=colors, marker='o',label='laser')
-ax.scatter(xs,ys,zs, c=colours2, marker='s',label='scene')
+#cb = fig.colorbar(colmap,shrink=0.75)
+#cb.set_label('Laser Dot')
+#cb2 = fig.colorbar(colmap2,shrink=0.75)
+#cb2.set_label('Background')
 
-cb = fig.colorbar(colmap,shrink=0.75)
-cb.set_label('laser dot')
-cb2 = fig.colorbar(colmap2,shrink=0.75)
-cb2.set_label('background')
-
-ax.set_xlabel('Hue')
-ax.set_ylabel('Saturation')
-ax.set_zlabel('Value')
+#ax.set_xlabel('Hue')
+#ax.set_ylabel('Saturation')
+#ax.set_zlabel('Intensity')
 
 #########
+fig1 = plt.figure(1)
+ax1 = fig1.add_subplot(111)
+#ax1.grid(True)
+
+huefreq = np.sum(np.sum(colourfreq,axis=2),axis=1)
+ax1.set_xlim([0,180])
+ax1.set_ylim([0,max(huefreq) + 20])
+ax1.bar(np.arange(256) - 0.5,huefreq, width=1.0, color='b')
+ax1.set_xticks(np.arange(0,181,20))
+ax1.set_title('Frequency of Occurence of Hues') 
+ax1.set_xlabel('Hue (0-180)')
+ax1.set_ylabel('Frequency (pixels)')
 
 #plt.legend(loc='upper left')
-fig2 = plt.figure(2)
-ax2 = fig2.add_subplot(111)
-ax2.grid(True)
-hueaccept1 = colourfreq[40:80,:,:]
-hueaccept = np.nonzero(hueaccept1)
-satdata = hueaccept[1]
-valdata = hueaccept[2]
-densityfunc = hueaccept1[hueaccept]
-colours3 = cm.cool(densityfunc/max(densityfunc))
+#fig2 = plt.figure(2)
+#ax2 = fig2.add_subplot(111)
+#ax2.grid(True)
+#hueaccept1 = colourfreq[40:80,:,:]
+#hueaccept = np.nonzero(hueaccept1)
+#satdata = hueaccept[1]
+#valdata = hueaccept[2]
+#densityfunc = hueaccept1[hueaccept]
+#colours3 = cm.cool(densityfunc/max(densityfunc))
 
-colmap3 = cm.ScalarMappable(cmap = cm.cool)
-colmap3.set_array(densityfunc/max(densityfunc))
+#colmap3 = cm.ScalarMappable(cmap = cm.cool)
+#colmap3.set_array(densityfunc)
 
-ax2.scatter(satdata,valdata, c=colours3,marker='o')
-cb3 = fig2.colorbar(colmap3,shrink=0.75)
-cb3.set_label('frequency')
-ax2.set_xlabel('Saturation')
-ax2.set_ylabel('Value')
+#ax2.scatter(satdata,valdata, c=colours3,marker='o')
+#cb3 = fig2.colorbar(colmap3,shrink=0.75)
+#ax2.set_title('Intenisty vs. Saturation') 
+#cb3.set_label('frequency')
+#ax2.set_xlabel('Saturation')
+#ax2.set_ylabel('Intensity')
 #######
 
-fig3 = plt.figure(3)
-ax3 = fig3.add_subplot(111)
-ax3.grid(True)
-hueaccept2 = colourscene[40:80,:,:]
-hueaccept3 = np.nonzero(hueaccept2)
-satdatas = hueaccept3[1]
-valdatas = hueaccept3[2]
-densityfuncs = hueaccept2[hueaccept3]
-if len(densityfuncs) != 0:
-        colours4 = cm.cool(densityfuncs/max(densityfuncs))
-        colmap4 = cm.ScalarMappable(cmap = cm.cool)
-        colmap4.set_array(densityfuncs/max(densityfuncs))
+#fig3 = plt.figure(3)
+#ax3 = fig3.add_subplot(111)
+#ax3.grid(True)
+#hueaccept2 = colourscene[40:80,:,:]
+#hueaccept3 = np.nonzero(hueaccept2)
+#satdatas = hueaccept3[1]
+#valdatas = hueaccept3[2]
+#densityfuncs = hueaccept2[hueaccept3]
+#if len(densityfuncs) != 0:
+        #colours4 = cm.cool(densityfuncs/max(densityfuncs))
+        #colmap4 = cm.ScalarMappable(cmap = cm.cool)
+        #colmap4.set_array(densityfuncs/max(densityfuncs))
 
-        ax3.scatter(satdatas,valdatas, c=colours4,marker='o')
-        cb4 = fig3.colorbar(colmap4,shrink=0.75)
-        cb4.set_label('frequency')
-        ax3.set_xlabel('Scene Saturation')
-        ax3.set_ylabel('Scene Value')
-else:
-        print 'No background pixels in the hue range 40 to 80' 
+        #ax3.scatter(satdatas,valdatas, c=colours4,marker='o')
+        #cb4 = fig3.colorbar(colmap4,shrink=0.75)
+        #cb4.set_label('frequency')
+        #ax3.set_title('Intenisty vs. Saturation') 
+        #ax3.set_xlabel('Scene Saturation')
+        #ax3.set_ylabel('Scene Value')
+#else:
+        #print 'No background pixels in the hue range 40 to 80' 
 ######
+
+#fig4 = plt.figure(4)
+##huefrequencies = colourfreq[0]
+##freqhue = np.bincount(huefrequencies)
+##huesxaxis = np.arange(len(freqhue))
+#ax4 = fig4.add_subplot(111)
+#ax4.grid(True)
+#ax4.set_title('Frequency of Occurence vs. Hue')
+#ax4.scatter(colorfreq[0],freqhue, marker='o')
+#ax4.set_xlabel('Hue')
+#ax4.set_ylabel('Frequency of Occurence')
+
+#######
 cleanupf()
 cv2.destroyAllWindows()
 cap.release()

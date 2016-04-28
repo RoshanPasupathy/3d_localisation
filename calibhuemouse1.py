@@ -117,7 +117,7 @@ while running:
     	calibwindowopen = True
     if not scene:
         cv2.imshow('video', frame)
-    if picturestaken == 6:
+    if picturestaken == 4:
     	running = False
     
 sortedh = np.sort(hueaxis)

@@ -62,23 +62,32 @@ class WebcamVideoStream:
 vs = WebcamVideoStream(src=0).start()
 l = 1
 i = 1
+capture = 1
 start = time.clock()
-while (True) & ( l < 400):
+while (True) & (capture < 5):
 	#ret,frame = cap.read()
 	frame = vs.read()
+	framecopy = frame.copy()
 	output = squarelut8(output,480,640,10,frame[output[4]:output[5],:,:])
 	if output[0] <= output[1]:
-		#cv2.rectangle(frame,(output[0],output[2]),(output[1],output[3]),(255,0,0),2)
-		print np.asarray(output)[0:4]
-	else:
-		print "Ball Not detected"
+		cv2.rectangle(frame,(output[0],output[2]),(output[1],output[3]),(0,255,0),2)
+		#print np.asarray(output)[0:4]
+	#else:
+		#print "Ball Not detected"
 	l += 1
-	#cv2.imshow('frame',frame)
+	cv2.imshow('frame',frame)
 	#if cv2.waitKey(1) & 0xFF == ord('c'):
 	#	stringval = 'img' + str(i) +'.bmp'
 	#	cv2.imwrite(stringval,frame1)
 	#	i += 1
 	#	print stringval + ' taken'
+	if cv2.waitKey(1) & 0xFF == ord('c'):
+		stringvaln = '/home/pi/ip/report/notdetLED' + str(capture) + '.bmp'
+		stringvald = '/home/pi/ip/report/detLED' + str(capture) + '.bmp' 
+		cv2.imwrite(stringvaln, framecopy)
+		cv2.imwrite(stringvald, frame)
+		capture += 1
+		print ' number of images captured ', capture
 	if cv2.waitKey(1) & 0xFF == ord('q'):
 		break
 end = time.clock()

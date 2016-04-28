@@ -54,16 +54,16 @@ cdef void tablegen(long hmin,long hmax,double m1, double c1, double m2, double c
 @cython.boundscheck(False)
 @cython.cdivision(True)
 @cython.wraparound(False)
-cdef unsigned char[:,:,::1] tablegen2(long hmin,long hmax,long smin, long smax, long v, long vmax):
+cdef void tablegen2(long hmin,long hmax,long smin, long smax, long v, long vmax):
     cdef:
-        unsigned char[:,:,::1] table = np.zeros((256,256,256),dtype = np.uint8)
+        #unsigned char[:,:,::1] table = np.zeros((256,256,256),dtype = np.uint8)
+        #unsigned char* table_ptr = &table[0,0,0]
         long x0,y0,z0
         double b,g,r
         int K
         double chroma
-        long hue
-        long saturation
-        unsigned char* table_ptr = &table[0,0,0]        
+        long hue, saturation
+    global tablelut_ptr        
     for x0 in range(256):
         for y0 in range(256):
             for z0 in range(256):
@@ -83,8 +83,43 @@ cdef unsigned char[:,:,::1] tablegen2(long hmin,long hmax,long smin, long smax, 
                 if chroma != 0:
                     hue = int(30 * abs(K +((g-b)/(chroma))))
                     if (hue>= hmin) & (hue <= hmax) & (r >=v) & (r <= vmax) & (saturation >= smin) & (saturation <= smax):
-                        table_ptr[(256*256*x0) + (256*y0)+z0] = 1
-    return table
+                        tablelut_ptr[(256*256*x0) + (256*y0)+z0] = 1
+    #return None
+
+#@cython.boundscheck(False)
+#@cython.cdivision(True)
+#@cython.wraparound(False)
+#cdef unsigned char[:,:,::1] tablegen2(long hmin,long hmax,long smin, long smax, long v, long vmax):
+#    cdef:
+#        unsigned char[:,:,::1] table = np.zeros((256,256,256),dtype = np.uint8)
+#        long x0,y0,z0
+#        double b,g,r
+#        int K
+#        double chroma
+#        long hue
+#        long saturation
+#        unsigned char* table_ptr = &table[0,0,0]        
+#    for x0 in range(256):
+#        for y0 in range(256):
+#            for z0 in range(256):
+#                b,g,r = x0,y0,z0
+#                K = 0
+#                if g < b:
+#                    g,b = b,g
+#                    K = -6
+#                if r < g:
+#                    r,g = g,r
+#                    K =  -K - 2
+#                chroma = r - min(g,b)
+#                if r != 0:
+#                    saturation = int(255 * chroma/(r * 1.0))
+#                else:
+#                    saturation = 0
+#                if chroma != 0:
+#                    hue = int(30 * abs(K +((g-b)/(chroma))))
+#                    if (hue>= hmin) & (hue <= hmax) & (r >=v) & (r <= vmax) & (saturation >= smin) & (saturation <= smax):
+#                        table_ptr[(256*256*x0) + (256*y0)+z0] = 1
+#    return table
 
 #cdef unsigned char[:,:,::1] tablelut = tablegen2(87,90,50,255,190,255)
 #cdef unsigned char[:,:,::1] tablelut = tablegen2(163,179,50,255,50,255)
@@ -93,7 +128,9 @@ cdef unsigned char[:,:,::1] tablegen2(long hmin,long hmax,long smin, long smax, 
 #####cdef unsigned char[:,:,::1] tablelut = tablegen(40,80,-1.0,100.0,-0.651162,242.7906,10.0) #consider changing thresh to 15.0 or 20.0 
 #####cdef unsigned char* tablelut_ptr = &tablelut[0,0,0]
 
-tablegen(40,80,-1.0,100.0,-0.651162,242.7906,40.0) #consider changing thresh to >40
+#tablegen(40,80,-1.0,100.0,-0.651162,242.7906,40.0) #consider changing thresh to >40
+##tablegen(40,80, -4.46280992e-01,2.14000000e+02,-2.00000000e-01,2.82000000e+02,50.0) #consider changing thresh to >40
+tablegen2(100,140,20,255,70,255)
 
 #cdef long[::1] x_out = np.zeros((480*640), dtype = np.int32)
 #cdef long* x_outptr = &x_out[0]
@@ -212,9 +249,9 @@ def squarelut8(int[::1] output,int x, int y,unsigned char v,unsigned char[:,:,::
             outputptr[0] += (y_outptr[1] - outputptr[0])*(outputptr[0] > y_outptr[1])
             outputptr[1] += (y_outptr[i-i0] - outputptr[1])*(outputptr[1] < y_outptr[i - i0])
             # change search area 
-            ymaxscan += (outputptr[1] + 5 -ymaxscan) * (outputptr[1] + 5 < ymaxscan) 
+            ymaxscan += (outputptr[1] + 20 -ymaxscan) * (outputptr[1] + 20 < ymaxscan) 
         #break out of loop if no pixel of ineterest detected in 3 lines after xpos switched on
-        elif x0 - x_outptr[1] > 2:
+        elif x0 - x_outptr[1] > 100:
             break        
     outputptr[2] = x_outptr[0] + outputptr[4] #if none detected outputptr[2] = deltax + image start
     outputptr[3] = x_outptr[1] + outputptr[4] #if none detected outputptr[3] = delatx - 1 + imagestart
