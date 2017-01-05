@@ -1,4 +1,5 @@
 Readme file
+****Note: Contains redundancies****
 
 binarytester.py 
 """creates a thresholded image based on given parameters"""
